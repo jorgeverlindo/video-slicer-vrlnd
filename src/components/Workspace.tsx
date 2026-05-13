@@ -129,7 +129,7 @@ export default function Workspace({
           </span>
           <span className="card-meta">{paramMetaLabel}</span>
         </div>
-        <div className="card-body" style={{ flex: 1, display: 'flex', flexDirection: 'column' }}>
+        <div className="card-body" style={{ flex: 1, display: 'flex', flexDirection: 'column', overflow: 'hidden' }}>
 
           {/* Sampling mode — 3 options */}
           <div className="field">
@@ -196,7 +196,7 @@ export default function Workspace({
                 </div>
               ) : (
                 <div style={{
-                  maxHeight: 260, overflowY: 'auto',
+                  maxHeight: 240, overflowY: 'auto',
                   display: 'flex', flexDirection: 'column', gap: 6,
                   paddingRight: 2,
                 }}>
@@ -254,10 +254,10 @@ export default function Workspace({
             </div>
           )}
 
-          <div style={{ flex: 1 }} />
+          <div style={{ flex: 1, minHeight: 0 }} />
 
-          {/* JPEG quality */}
-          <div className="field" style={{ marginBottom: 24, marginTop: 16 }}>
+          {/* JPEG quality — flexShrink: 0 keeps it anchored regardless of list height */}
+          <div className="field" style={{ marginBottom: 24, marginTop: 16, flexShrink: 0 }}>
             <span className="field-label">JPEG quality</span>
             <div className="range-row">
               <input type="range" min={0.5} max={1} step={0.05} value={params.quality}

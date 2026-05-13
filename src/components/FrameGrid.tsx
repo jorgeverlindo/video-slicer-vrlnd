@@ -31,14 +31,22 @@ export default function FrameGrid({ frames, onClear }: Props) {
 
   return (
     <section style={{ marginTop: 32 }}>
+      {/* Sticky header — sticks below the 56px navbar */}
       <div style={{
-        display: 'flex', justifyContent: 'space-between', alignItems: 'flex-end',
-        marginBottom: 20, gap: 16, flexWrap: 'wrap',
-        paddingBottom: 16, borderBottom: '1px solid var(--border)',
+        position: 'sticky',
+        top: 56,
+        zIndex: 20,
+        background: 'var(--app-bg)',
+        paddingTop: 16,
+        paddingBottom: 16,
+        marginBottom: 20,
+        borderBottom: '1px solid var(--border)',
+        display: 'flex', justifyContent: 'space-between', alignItems: 'center',
+        gap: 16, flexWrap: 'wrap',
       }}>
         <div>
-          <div style={{ display: 'flex', alignItems: 'center', gap: 12 }}>
-            <h2>Extracted frames</h2>
+          <div style={{ display: 'flex', alignItems: 'center', gap: 10 }}>
+            <h2 style={{ lineHeight: 1 }}>Extracted frames</h2>
             <span className="results-count-chip">{frames.length}</span>
           </div>
           <div style={{ fontSize: 12, color: 'var(--text-secondary)', marginTop: 6 }}>
