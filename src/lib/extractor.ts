@@ -6,7 +6,7 @@ export type Frame = {
 }
 
 export type ExtractionParams = {
-  mode: 'interval' | 'count'
+  mode: 'interval' | 'count' | 'custom'
   interval: number
   count: number
   quality: number

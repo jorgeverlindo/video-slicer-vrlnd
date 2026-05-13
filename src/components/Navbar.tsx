@@ -1,8 +1,6 @@
-import { HelpCircle, Settings } from 'lucide-react'
-
 // Constellation wordmark SVG (full)
 const Wordmark = () => (
-  <svg height="18" viewBox="0 0 176 32" fill="none" xmlns="http://www.w3.org/2000/svg" aria-label="Constellation">
+  <svg width="160" height="29" viewBox="0 0 176 32" fill="none" xmlns="http://www.w3.org/2000/svg" aria-label="Constellation">
     <path d="M2.22422 16.0471C2.22422 7.57204 8.61025 0.631495 16.6988 0.0413128C16.332 0.0118036 15.9594 0 15.5867 0C6.97648 0 0 7.18252 0 16.0471C0 24.9116 6.97648 32.0941 15.5867 32.0941C15.9594 32.0941 16.332 32.0823 16.6988 32.0528C8.61025 31.4626 2.22422 24.5221 2.22422 16.0471Z" fill="#1F1D25"/>
     <path d="M6.12234 16.0471C6.12234 9.69079 10.909 4.48539 16.9797 4.04275C16.7046 4.02504 16.4237 4.01324 16.1428 4.01324C9.68797 4.01324 4.45417 9.4016 4.45417 16.0471C4.45417 22.6925 9.68797 28.0809 16.1428 28.0809C16.4237 28.0809 16.7046 28.0691 16.9797 28.0514C10.9147 27.6087 6.12234 22.4033 6.12234 16.0471Z" fill="#1F1D25"/>
     <path d="M17.2606 8.04418C17.0772 8.03238 16.8938 8.02648 16.7046 8.02648C12.3995 8.02648 8.90834 11.6207 8.90834 16.053C8.90834 20.4852 12.3995 24.0794 16.7046 24.0794C16.8938 24.0794 17.0772 24.0735 17.2606 24.0558C13.2135 23.7607 10.0262 20.2905 10.0262 16.053C10.0262 11.8155 13.2192 8.34518 17.2606 8.05009V8.04418Z" fill="#1F1D25"/>
@@ -27,16 +25,6 @@ export default function Navbar() {
     <nav className="navbar">
       <div style={{ display: 'flex', alignItems: 'center', gap: 10 }}>
         <Wordmark />
-      </div>
-      <div className="navbar-divider" />
-      <div className="navbar-breadcrumb"><strong>Frame Slicer</strong></div>
-      <div className="navbar-actions">
-        <button className="icon-btn" aria-label="Help" title="Help">
-          <HelpCircle size={20} />
-        </button>
-        <button className="icon-btn" aria-label="Settings" title="Settings">
-          <Settings size={20} />
-        </button>
       </div>
     </nav>
   )

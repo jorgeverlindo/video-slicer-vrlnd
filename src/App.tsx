@@ -10,6 +10,12 @@ import {
   loadFFmpeg, probeWithFFmpeg,
 } from './lib/extractor'
 
+export type MarkedFrame = {
+  id: number
+  timestamp: number
+  thumbnail: string // low-res data URL for preview
+}
+
 type VideoMode = 'native' | 'ffmpeg'
 
 type AppState = {
@@ -17,6 +23,7 @@ type AppState = {
   duration: number
   videoMode: VideoMode
   frames: Frame[]
+  markedFrames: MarkedFrame[]
   extracting: boolean
   progress: { done: number; total: number } | null
   error: string | null
@@ -44,7 +51,8 @@ export default function App() {
 
   const [state, setState] = useState<AppState>({
     file: null, duration: 0, videoMode: 'native',
-    frames: [], extracting: false, progress: null,
+    frames: [], markedFrames: [],
+    extracting: false, progress: null,
     error: null, status: null, showFallbackHelp: false,
   })
   const [params, setParams] = useState<ExtractionParams>(DEFAULT_PARAMS)
@@ -52,12 +60,9 @@ export default function App() {
   const patch = (partial: Partial<AppState>) => setState((s) => ({ ...s, ...partial }))
 
   // ── Load video ────────────────────────────────────────────────────────────
-  // Use a temporary probe element to detect codec support and duration.
-  // The actual playback video lives in Workspace and loads via its own useEffect,
-  // so videoRef always points to the visible, ready element during extraction.
 
   const handleFile = useCallback(async (file: File) => {
-    patch({ file, frames: [], error: null, status: null, showFallbackHelp: false, duration: 0 })
+    patch({ file, frames: [], markedFrames: [], error: null, status: null, showFallbackHelp: false, duration: 0 })
 
     const probe = document.createElement('video')
     probe.preload = 'metadata'
@@ -100,22 +105,36 @@ export default function App() {
     probe.addEventListener('error', onError, { once: true })
   }, [])
 
+  // ── Custom mode: mark / remove ────────────────────────────────────────────
+
+  const handleMark = useCallback((timestamp: number, thumbnail: string) => {
+    setState((s) => ({
+      ...s,
+      markedFrames: [...s.markedFrames, { id: Date.now() + Math.random(), timestamp, thumbnail }]
+        .sort((a, b) => a.timestamp - b.timestamp),
+    }))
+  }, [])
+
+  const handleRemoveMark = useCallback((id: number) => {
+    setState((s) => ({ ...s, markedFrames: s.markedFrames.filter((m) => m.id !== id) }))
+  }, [])
+
   // ── Extract ───────────────────────────────────────────────────────────────
 
   const handleExtract = useCallback(async () => {
     if (state.extracting || !state.file || !state.duration) return
 
-    // Release previous frame URLs
+    const timestamps = params.mode === 'custom'
+      ? state.markedFrames.map((m) => m.timestamp)
+      : buildTimestamps(state.duration, params)
+
+    if (timestamps.length === 0) return
+
     state.frames.forEach((f) => URL.revokeObjectURL(f.url))
     patch({ extracting: true, frames: [], error: null, progress: null })
 
-    const timestamps = buildTimestamps(state.duration, params)
     const total = timestamps.length
     const collected: Frame[] = []
-
-    const updateProgress = (done: number) => {
-      patch({ progress: { done, total } })
-    }
 
     try {
       const gen = state.videoMode === 'ffmpeg' && ffmpegInstanceRef.current && ffmpegInputRef.current
@@ -124,7 +143,6 @@ export default function App() {
 
       for await (const frame of gen) {
         collected.push(frame)
-        // Batch update: update state with all collected so far
         const snapshot = [...collected]
         setState((s) => ({ ...s, frames: snapshot, progress: { done: snapshot.length, total } }))
       }
@@ -150,24 +168,18 @@ export default function App() {
     <>
       <Navbar />
 
-      <main style={{ maxWidth: 1200, margin: '0 auto', padding: '40px 24px 24px' }}>
+      <main style={{ width: '80%', margin: '0 auto', padding: '40px 0 24px' }}>
 
         {/* Hero */}
-        <header style={{
-          marginBottom: 32, display: 'flex', alignItems: 'flex-end',
-          justifyContent: 'space-between', gap: 24, flexWrap: 'wrap',
-        }}>
-          <div style={{ maxWidth: 640 }}>
-            <h1>Frame Slicer</h1>
-            <p style={{ color: 'var(--text-secondary)', fontSize: 14, marginTop: 8, lineHeight: 1.5 }}>
-              Extract frames from any video, locally in your browser.
-              No upload, no server — the file never leaves your machine.
-            </p>
-          </div>
-          <div className="hero-badge"><span className="dot" /> Local processing</div>
+        <header style={{ marginBottom: 32 }}>
+          <h1>Video Slicer</h1>
+          <p style={{ color: 'var(--text-secondary)', fontSize: 14, marginTop: 8, lineHeight: 1.5 }}>
+            Extract frames from any video, locally in your browser.
+            No upload, no server — the file never leaves your machine.
+          </p>
         </header>
 
-        {/* Dropzone — hidden once a video is loaded */}
+        {/* Dropzone */}
         {!hasVideo && <Dropzone onFile={handleFile} />}
 
         {/* Status alert */}
@@ -186,7 +198,7 @@ export default function App() {
           </div>
         )}
 
-        {/* Fallback help when FFmpeg fails */}
+        {/* Fallback help */}
         {state.showFallbackHelp && (
           <div className="solution-panel">
             <div style={{ display: 'flex', gap: 12, marginBottom: 8, alignItems: 'flex-start' }}>
@@ -197,49 +209,38 @@ export default function App() {
               }}>
                 <AlertCircle size={18} />
               </div>
-              <div>
-                <div style={{ fontFamily: 'Inter,sans-serif', fontSize: 16, fontWeight: 600, color: 'var(--text-primary)', lineHeight: 1.4 }}>
-                  We can't process this video
-                </div>
+              <div style={{ fontFamily: 'Inter,sans-serif', fontSize: 16, fontWeight: 600, color: 'var(--text-primary)', lineHeight: 1.4 }}>
+                We can&apos;t process this video
               </div>
             </div>
             <div style={{ fontSize: 13, color: 'var(--text-secondary)', marginBottom: 20, marginLeft: 44 }}>
               {state.error}
             </div>
-
             {isFileProtocol && (
               <div className="solution">
                 <div className="solution-title">Solution 1 · Run a local server</div>
-                <p style={{ fontSize: 13, color: 'var(--text-primary)', marginBottom: 8 }}>
-                  FFmpeg.wasm requires http(s). Open a terminal in this file&apos;s folder and run:
-                </p>
                 <code>npm run dev</code>
                 <div style={{ fontSize: 12, color: 'var(--text-secondary)', marginTop: 8 }}>
                   Then open <strong style={{ color: 'var(--brand)' }}>http://localhost:5174</strong>
                 </div>
               </div>
             )}
-
             <div className="solution">
               <div className="solution-title">Solution 2 · Convert the video first</div>
-              <p style={{ fontSize: 13, color: 'var(--text-primary)', marginBottom: 4 }}>
-                Convert to MP4/H.264 (natively supported by browsers):
-              </p>
               <p style={{ fontSize: 13, color: 'var(--text-secondary)', marginBottom: 4 }}>
                 <strong style={{ color: 'var(--text-primary)' }}>macOS:</strong>{' '}
-                open in QuickTime Player → File → Export As → 1080p
+                QuickTime Player → File → Export As → 1080p
               </p>
               <code>ffmpeg -i your_video.mov -c:v libx264 -crf 23 output.mp4</code>
             </div>
-
             <button className="btn btn-secondary" style={{ marginTop: 16 }} onClick={() => {
               state.frames.forEach((f) => URL.revokeObjectURL(f.url))
               setState({
                 file: null, duration: 0, videoMode: 'native',
-                frames: [], extracting: false, progress: null,
+                frames: [], markedFrames: [], extracting: false, progress: null,
                 error: null, status: null, showFallbackHelp: false,
               })
-              if (videoRef.current) { videoRef.current.src = '' }
+              if (videoRef.current) videoRef.current.src = ''
             }}>
               Try another file
             </button>
@@ -258,6 +259,9 @@ export default function App() {
             extracting={state.extracting}
             progress={state.progress}
             onExtract={handleExtract}
+            markedFrames={state.markedFrames}
+            onMark={handleMark}
+            onRemoveMark={handleRemoveMark}
           />
         )}
 
