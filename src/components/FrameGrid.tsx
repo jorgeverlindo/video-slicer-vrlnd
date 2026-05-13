@@ -34,7 +34,7 @@ export default function FrameGrid({ frames, onClear }: Props) {
       {/* Sticky header — sticks below the 56px navbar */}
       <div style={{
         position: 'sticky',
-        top: 56,
+        top: 0,
         zIndex: 20,
         background: 'var(--app-bg)',
         paddingTop: 16,
