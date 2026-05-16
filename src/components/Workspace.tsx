@@ -278,7 +278,7 @@ export default function Workspace({
                 onChange={e => onTranscriptEnabledChange(e.target.checked)}
                 style={{ accentColor: 'var(--brand)', width: 14, height: 14, flexShrink: 0 }}
               />
-              <span style={{ fontSize: 12, fontWeight: 500, color: 'var(--text-primary)' }}>
+              <span style={{ fontSize: 14, fontWeight: 300, color: 'var(--text-primary)' }}>
                 Audio Transcript
               </span>
             </label>

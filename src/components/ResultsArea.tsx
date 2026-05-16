@@ -143,7 +143,7 @@ export default function ResultsArea({
                 {txReady && (
                   <label style={{
                     display: 'flex', alignItems: 'center', gap: 6,
-                    fontSize: 12, color: 'var(--text-secondary)',
+                    fontSize: 14, fontWeight: 300, color: 'var(--text-secondary)',
                     cursor: 'pointer', userSelect: 'none', whiteSpace: 'nowrap',
                   }}>
                     <input
@@ -351,7 +351,7 @@ function TabBtn({ active, onClick, children }: { active: boolean; onClick: () =>
         display: 'flex', alignItems: 'center', gap: 6,
         padding: '8px 16px 10px',
         background: 'none', border: 'none', cursor: 'pointer',
-        fontSize: 13, fontWeight: active ? 600 : 400,
+        fontSize: 14, fontWeight: active ? 500 : 300,
         color: active ? 'var(--brand)' : 'var(--text-secondary)',
         borderBottom: active ? '2px solid var(--brand)' : '2px solid transparent',
         marginBottom: -1,
