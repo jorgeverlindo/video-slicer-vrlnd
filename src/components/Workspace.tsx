@@ -1,9 +1,9 @@
 import { useEffect, useState } from 'react'
-import { Sliders, Video, MapPin, X } from 'lucide-react'
+import { Sliders, Video, MapPin, X, ChevronDown, Loader2, ArrowDownToLine } from 'lucide-react'
 import type { ExtractionParams } from '../lib/extractor'
 import { fmtDuration, fmtTimecode } from '../lib/extractor'
 import type { MarkedFrame } from '../App'
-import type { TranscriptLang } from '../lib/transcriber'
+import type { TranscriptLang, TranscriptStatus } from '../lib/transcriber'
 
 type VideoMode = 'native' | 'ffmpeg'
 
@@ -25,6 +25,9 @@ type Props = {
   onTranscriptEnabledChange: (v: boolean) => void
   transcriptLang: TranscriptLang | null
   onTranscriptLangChange: (lang: TranscriptLang) => void
+  transcriptStatus: TranscriptStatus
+  transcriptMsg: string
+  transcriptProgress: number | null
 }
 
 export default function Workspace({
@@ -33,6 +36,7 @@ export default function Workspace({
   markedFrames, onMark, onRemoveMark,
   transcriptEnabled, onTranscriptEnabledChange,
   transcriptLang, onTranscriptLangChange,
+  transcriptStatus, transcriptMsg, transcriptProgress,
 }: Props) {
   const [videoMeta, setVideoMeta] = useState('')
 
@@ -272,6 +276,7 @@ export default function Workspace({
             <label style={{
               display: 'flex', alignItems: 'center', gap: 8,
               cursor: 'pointer', userSelect: 'none',
+              marginBottom: transcriptEnabled ? 10 : 0,
             }}>
               <input
                 type="checkbox"
@@ -284,33 +289,67 @@ export default function Workspace({
               </span>
             </label>
 
-            {transcriptEnabled && (
-              <div style={{ marginTop: 10 }}>
-                <div style={{
-                  fontSize: 11, fontWeight: 400, textTransform: 'uppercase',
-                  letterSpacing: '0.08em', color: 'var(--text-placeholder)',
-                  marginBottom: 8,
-                }}>
-                  {transcriptLang === null ? 'Select language to start' : 'Language'}
-                </div>
-                <div className="seg" style={{ gridTemplateColumns: '1fr 1fr' }}>
-                  <input type="radio" name="transcript-lang" id="lang-en" value="en"
-                    checked={transcriptLang === 'en'}
-                    onChange={() => onTranscriptLangChange('en')} />
-                  <label htmlFor="lang-en">🇬🇧 EN</label>
+            {transcriptEnabled && (() => {
+              const isActive = transcriptStatus !== 'idle' && transcriptStatus !== 'done' && transcriptStatus !== 'error'
+              const isDownloading = transcriptStatus === 'loading-model' || transcriptStatus === 'loading-model-multilingual'
+              return (
+                <div style={{ display: 'flex', alignItems: 'center', gap: 10, minWidth: 0 }}>
 
-                  <input type="radio" name="transcript-lang" id="lang-pt" value="pt"
-                    checked={transcriptLang === 'pt'}
-                    onChange={() => onTranscriptLangChange('pt')} />
-                  <label htmlFor="lang-pt">🇧🇷 PT</label>
-                </div>
-                {transcriptLang && transcriptLang !== 'en' && (
-                  <div style={{ fontSize: 10, color: 'var(--text-secondary)', opacity: 0.7, marginTop: 6 }}>
-                    ~460 MB model download
+                  {/* Dropdown */}
+                  <div style={{ position: 'relative', flexShrink: 0 }}>
+                    <select
+                      value={transcriptLang ?? ''}
+                      onChange={e => { if (e.target.value) onTranscriptLangChange(e.target.value as TranscriptLang) }}
+                      style={{
+                        height: 28, padding: '0 26px 0 10px',
+                        fontSize: 12, fontFamily: 'inherit',
+                        background: 'var(--gray-100)',
+                        color: transcriptLang ? 'var(--text-primary)' : 'var(--text-placeholder)',
+                        border: '1px solid var(--border)', borderRadius: 'var(--radius-pill)',
+                        cursor: 'pointer', outline: 'none', appearance: 'none',
+                      }}
+                    >
+                      <option value="" disabled>Select language</option>
+                      <option value="en">🇬🇧 English</option>
+                      <option value="pt">🇧🇷 Portuguese</option>
+                    </select>
+                    <ChevronDown size={11} style={{
+                      position: 'absolute', right: 8, top: '50%',
+                      transform: 'translateY(-50%)', pointerEvents: 'none',
+                      color: 'var(--text-secondary)',
+                    }} />
                   </div>
-                )}
-              </div>
-            )}
+
+                  {/* Inline status */}
+                  {isActive && (
+                    <div style={{
+                      display: 'flex', alignItems: 'center', gap: 5,
+                      fontSize: 11, color: 'var(--text-secondary)', fontWeight: 300,
+                      minWidth: 0, overflow: 'hidden',
+                    }}>
+                      {isDownloading ? (
+                        <ArrowDownToLine size={12} style={{ flexShrink: 0, color: 'var(--brand)' }} />
+                      ) : (
+                        <Loader2 size={12} style={{ flexShrink: 0, animation: 'spin 1s linear infinite' }} />
+                      )}
+                      <span style={{ whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' }}>
+                        {isDownloading && transcriptProgress != null
+                          ? `${transcriptProgress}%`
+                          : transcriptMsg}
+                      </span>
+                    </div>
+                  )}
+
+                  {/* ~460 MB hint — shown before transcription starts */}
+                  {!isActive && transcriptLang && transcriptLang !== 'en' && transcriptStatus === 'idle' && (
+                    <span style={{ fontSize: 10, color: 'var(--text-secondary)', opacity: 0.7, flexShrink: 0 }}>
+                      ~460 MB
+                    </span>
+                  )}
+
+                </div>
+              )
+            })()}
           </div>
 
           {/* JPEG quality — flexShrink: 0 keeps it anchored regardless of list height */}

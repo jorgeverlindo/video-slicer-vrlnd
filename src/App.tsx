@@ -352,6 +352,9 @@ export default function App() {
             onTranscriptEnabledChange={handleTranscriptEnabledChange}
             transcriptLang={transcriptLang}
             onTranscriptLangChange={handleLanguageChange}
+            transcriptStatus={transcript.status}
+            transcriptMsg={transcript.statusMsg}
+            transcriptProgress={transcript.downloadProgress}
             onClearVideo={handleClearVideo}
           />
         )}
