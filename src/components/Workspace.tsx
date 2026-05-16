@@ -17,6 +17,7 @@ type Props = {
   extracting: boolean
   progress: { done: number; total: number } | null
   onExtract: () => void
+  onClearVideo: () => void
   markedFrames: MarkedFrame[]
   onMark: (timestamp: number, thumbnail: string) => void
   onRemoveMark: (id: number) => void
@@ -28,7 +29,7 @@ type Props = {
 
 export default function Workspace({
   file, videoMode, duration, videoRef,
-  params, onParamsChange, extracting, progress, onExtract,
+  params, onParamsChange, extracting, progress, onExtract, onClearVideo,
   markedFrames, onMark, onRemoveMark,
   transcriptEnabled, onTranscriptEnabledChange,
   transcriptLang, onTranscriptLangChange,
@@ -318,13 +319,24 @@ export default function Workspace({
             </div>
           </div>
 
-          <button
-            className="btn btn-primary btn-block"
-            disabled={!canExtract}
-            onClick={onExtract}
-          >
-            {extractLabel}
-          </button>
+          <div style={{ display: 'flex', gap: 8 }}>
+            <button
+              className="btn btn-secondary"
+              style={{ flex: 1 }}
+              onClick={onClearVideo}
+              disabled={extracting}
+            >
+              Clear Video
+            </button>
+            <button
+              className="btn btn-primary"
+              style={{ flex: 1 }}
+              disabled={!canExtract}
+              onClick={onExtract}
+            >
+              {extractLabel}
+            </button>
+          </div>
 
           {progress && (
             <div className="progress" style={{ marginTop: 16 }}>

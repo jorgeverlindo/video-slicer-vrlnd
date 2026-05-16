@@ -206,6 +206,19 @@ export default function App() {
     patch({ frames: [] })
   }, [state.frames])
 
+  const handleClearVideo = useCallback(() => {
+    state.frames.forEach((f) => URL.revokeObjectURL(f.url))
+    setState({
+      file: null, duration: 0, videoMode: 'native',
+      frames: [], markedFrames: [], extracting: false, progress: null,
+      error: null, status: null, showFallbackHelp: false,
+    })
+    setTranscript({ status: 'idle', statusMsg: '', result: null, downloadProgress: null })
+    setTranscriptEnabled(false)
+    if (videoRef.current) videoRef.current.src = ''
+    ffmpegInputRef.current = null
+  }, [state.frames])
+
   // ── Render ────────────────────────────────────────────────────────────────
 
   const hasVideo = !!state.file && state.duration > 0
@@ -340,6 +353,7 @@ export default function App() {
             onTranscriptEnabledChange={handleTranscriptEnabledChange}
             transcriptLang={transcriptLang}
             onTranscriptLangChange={handleLanguageChange}
+            onClearVideo={handleClearVideo}
           />
         )}
 
