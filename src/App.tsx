@@ -1,6 +1,7 @@
 import { useRef, useState, useCallback } from 'react'
 import { AlertCircle, Info } from 'lucide-react'
 import Navbar from './components/Navbar'
+import { useTheme } from './components/ThemeToggle'
 import Dropzone from './components/Dropzone'
 import Workspace from './components/Workspace'
 import ResultsArea from './components/ResultsArea'
@@ -47,6 +48,7 @@ function footerDate() {
 }
 
 export default function App() {
+  const { theme, toggle: toggleTheme } = useTheme()
   const videoRef = useRef<HTMLVideoElement>(null)
   const ffmpegInputRef = useRef<string | null>(null)
   const ffmpegInstanceRef = useRef<import('@ffmpeg/ffmpeg').FFmpeg | null>(null)
@@ -193,14 +195,41 @@ export default function App() {
 
   return (
     <>
-      <Navbar />
+      <Navbar theme={theme} onToggleTheme={toggleTheme} />
 
       <main style={{ width: '80%', margin: '0 auto', padding: '40px 0 24px' }}>
 
         {/* Hero */}
-        <header style={{ marginBottom: 32 }}>
+        <header style={{ marginBottom: 48 }}>
+          <p style={{
+            fontFamily: "'Macklin Sans', 'DM Sans', sans-serif",
+            fontSize: 12, fontWeight: 300, textTransform: 'uppercase',
+            letterSpacing: '0.08em', color: 'var(--text-secondary)',
+            marginBottom: 12,
+          }}>
+            A tool by{' '}
+            <a
+              href="https://jorgeverlindo.design"
+              target="_blank"
+              rel="noopener noreferrer"
+              style={{
+                color: 'var(--brand)',
+                textDecoration: 'none',
+                borderBottom: '1px solid var(--brand-35)',
+                paddingBottom: '1px',
+                transition: 'border-color var(--t-fast)',
+              }}
+            >
+              Jorge Verlindo
+            </a>
+          </p>
           <h1>Video Slicer</h1>
-          <p style={{ color: 'var(--text-secondary)', fontSize: 14, marginTop: 8, lineHeight: 1.5 }}>
+          <p style={{
+            fontFamily: "'Macklin Sans', 'DM Sans', sans-serif",
+            color: 'var(--text-secondary)', fontSize: 18,
+            fontWeight: 300, marginTop: 16, lineHeight: 1.5,
+            maxWidth: 560,
+          }}>
             Extract frames from any video, locally in your browser.
             No upload, no server — the file never leaves your machine.
           </p>
@@ -236,7 +265,7 @@ export default function App() {
               }}>
                 <AlertCircle size={18} />
               </div>
-              <div style={{ fontFamily: 'Inter,sans-serif', fontSize: 16, fontWeight: 600, color: 'var(--text-primary)', lineHeight: 1.4 }}>
+              <div style={{ fontFamily: "'Macklin Text','Playfair Display',serif", fontSize: 20, fontWeight: 400, color: 'var(--text-primary)', lineHeight: 1.3, letterSpacing: '-0.02em' }}>
                 We can&apos;t process this video
               </div>
             </div>
@@ -267,7 +296,7 @@ export default function App() {
                 frames: [], markedFrames: [], extracting: false, progress: null,
                 error: null, status: null, showFallbackHelp: false,
               })
-              setTranscript({ status: 'idle', statusMsg: '', result: null })
+              setTranscript({ status: 'idle', statusMsg: '', result: null, downloadProgress: null })
               if (videoRef.current) videoRef.current.src = ''
             }}>
               Try another file
@@ -308,12 +337,23 @@ export default function App() {
 
       <footer>
         <div className="footer-left">
-          <svg viewBox="0 0 32 32" width="14" height="14" fill="none">
-            <path d="M2.22422 16.0471C2.22422 7.57204 8.61025 0.631495 16.6988 0.0413128C16.332 0.0118036 15.9594 0 15.5867 0C6.97648 0 0 7.18252 0 16.0471C0 24.9116 6.97648 32.0941 15.5867 32.0941C15.9594 32.0941 16.332 32.0823 16.6988 32.0528C8.61025 31.4626 2.22422 24.5221 2.22422 16.0471Z" fill="#686576"/>
-            <path d="M6.12234 16.0471C6.12234 9.69079 10.909 4.48539 16.9797 4.04275C16.7046 4.02504 16.4237 4.01324 16.1428 4.01324C9.68797 4.01324 4.45417 9.4016 4.45417 16.0471C4.45417 22.6925 9.68797 28.0809 16.1428 28.0809C16.4237 28.0809 16.7046 28.0691 16.9797 28.0514C10.9147 27.6087 6.12234 22.4033 6.12234 16.0471Z" fill="#686576"/>
-            <path d="M17.2606 8.04418C17.0772 8.03238 16.8938 8.02648 16.7046 8.02648C12.3995 8.02648 8.90834 11.6207 8.90834 16.053C8.90834 20.4852 12.3995 24.0794 16.7046 24.0794C16.8938 24.0794 17.0772 24.0735 17.2606 24.0558C13.2135 23.7607 10.0262 20.2905 10.0262 16.053C10.0262 11.8155 13.2192 8.34518 17.2606 8.05009V8.04418Z" fill="#686576"/>
-          </svg>
-          <span>A Constellation tool</span>
+          <img
+            src="/logo.svg"
+            alt=""
+            width={16}
+            height={16}
+            aria-hidden="true"
+            className="jv-logo"
+            style={{ display: 'block', opacity: 0.7 }}
+          />
+          <a
+            href="https://jorgeverlindo.design"
+            target="_blank"
+            rel="noopener noreferrer"
+            style={{ color: 'inherit', textDecoration: 'none' }}
+          >
+            jorgeverlindo.design
+          </a>
         </div>
         <div className="footer-right">
           <span className="footer-status"><span className="dot" /> All processing happens in your browser</span>
