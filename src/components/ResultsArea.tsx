@@ -279,24 +279,67 @@ export default function ResultsArea({
 
           {/* Result */}
           {transcriptResult && (
-            <div style={{
-              background: 'var(--gray-100)',
-              borderRadius: 'var(--radius-lg)',
-              padding: '20px 24px',
-              fontSize: 20, lineHeight: 1.3,
-              fontFamily: "'Macklin Sans', 'DM Sans', sans-serif",
-              fontWeight: 300,
-              color: 'var(--text-primary)',
-              maxHeight: 520,
-              overflowY: 'auto',
-            }}>
-              {(transcriptResult.chunks ?? []).length > 0
-                ? transcriptResult.chunks.map((chunk, i) => (
-                    <span key={i} title={`${fmtT(chunk.timestamp[0])} → ${fmtT(chunk.timestamp[1])}`}>
-                      {chunk.text}
-                    </span>
-                  ))
-                : transcriptResult.text}
+            <div style={{ display: 'flex', gap: 24, alignItems: 'flex-start' }}>
+
+              {/* Transcript body — optimal reading column (65ch ≈ 65 characters) */}
+              <div style={{ flex: 1, maxWidth: '65ch' }}>
+                {(transcriptResult.chunks ?? []).length > 0
+                  ? transcriptResult.chunks.map((chunk, i) => (
+                      <div key={i} style={{
+                        display: 'grid',
+                        gridTemplateColumns: '44px 1fr',
+                        gap: '0 20px',
+                        marginBottom: 28,
+                        alignItems: 'baseline',
+                      }}>
+                        {/* Timecode */}
+                        <span style={{
+                          fontFamily: 'JetBrains Mono, SF Mono, monospace',
+                          fontSize: 11,
+                          color: 'var(--text-placeholder)',
+                          fontVariantNumeric: 'tabular-nums',
+                          letterSpacing: 0,
+                          paddingTop: 3,
+                          userSelect: 'none',
+                        }}>
+                          {fmtT(chunk.timestamp[0])}
+                        </span>
+                        {/* Text — Body 1 */}
+                        <span style={{
+                          fontSize: 20,
+                          lineHeight: 1.3,
+                          fontFamily: "'Macklin Sans', 'DM Sans', sans-serif",
+                          fontWeight: 300,
+                          color: 'var(--text-primary)',
+                        }}>
+                          {chunk.text.trim()}
+                        </span>
+                      </div>
+                    ))
+                  : (
+                    <p style={{
+                      fontSize: 20, lineHeight: 1.3,
+                      fontFamily: "'Macklin Sans', 'DM Sans', sans-serif",
+                      fontWeight: 300, color: 'var(--text-primary)',
+                    }}>
+                      {transcriptResult.text}
+                    </p>
+                  )
+                }
+              </div>
+
+              {/* Sticky copy button — follows scroll like Claude's code block button */}
+              <div className="transcript-copy-float" style={{ position: 'sticky', top: 80, flexShrink: 0 }}>
+                <button
+                  className="btn btn-secondary"
+                  onClick={copyTranscript}
+                  title={copied ? 'Copied!' : 'Copy transcript'}
+                  style={{ width: 40, height: 40, padding: 0 }}
+                >
+                  {copied ? <Check size={15} /> : <Copy size={15} />}
+                </button>
+              </div>
+
             </div>
           )}
         </>
