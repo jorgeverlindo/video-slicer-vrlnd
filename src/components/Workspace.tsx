@@ -23,7 +23,7 @@ type Props = {
   onRemoveMark: (id: number) => void
   transcriptEnabled: boolean
   onTranscriptEnabledChange: (v: boolean) => void
-  transcriptLang: TranscriptLang
+  transcriptLang: TranscriptLang | null
   onTranscriptLangChange: (lang: TranscriptLang) => void
 }
 
@@ -285,25 +285,29 @@ export default function Workspace({
             </label>
 
             {transcriptEnabled && (
-              <div style={{ display: 'flex', alignItems: 'center', gap: 8, marginTop: 10 }}>
-                <select
-                  value={transcriptLang}
-                  onChange={e => onTranscriptLangChange(e.target.value as TranscriptLang)}
-                  style={{
-                    height: 28, padding: '0 8px',
-                    fontSize: 12, fontFamily: 'inherit',
-                    background: 'var(--gray-100)', color: 'var(--text-primary)',
-                    border: '1px solid var(--border)', borderRadius: 'var(--radius-pill)',
-                    cursor: 'pointer', outline: 'none',
-                  }}
-                >
-                  <option value="en">🇬🇧 English</option>
-                  <option value="pt">🇧🇷 Portuguese</option>
-                </select>
-                {transcriptLang !== 'en' && (
-                  <span style={{ fontSize: 10, color: 'var(--text-secondary)', opacity: 0.7 }}>
-                    ~460 MB
-                  </span>
+              <div style={{ marginTop: 10 }}>
+                <div style={{
+                  fontSize: 11, fontWeight: 400, textTransform: 'uppercase',
+                  letterSpacing: '0.08em', color: 'var(--text-placeholder)',
+                  marginBottom: 8,
+                }}>
+                  {transcriptLang === null ? 'Select language to start' : 'Language'}
+                </div>
+                <div className="seg" style={{ gridTemplateColumns: '1fr 1fr' }}>
+                  <input type="radio" name="transcript-lang" id="lang-en" value="en"
+                    checked={transcriptLang === 'en'}
+                    onChange={() => onTranscriptLangChange('en')} />
+                  <label htmlFor="lang-en">🇬🇧 EN</label>
+
+                  <input type="radio" name="transcript-lang" id="lang-pt" value="pt"
+                    checked={transcriptLang === 'pt'}
+                    onChange={() => onTranscriptLangChange('pt')} />
+                  <label htmlFor="lang-pt">🇧🇷 PT</label>
+                </div>
+                {transcriptLang && transcriptLang !== 'en' && (
+                  <div style={{ fontSize: 10, color: 'var(--text-secondary)', opacity: 0.7, marginTop: 6 }}>
+                    ~460 MB model download
+                  </div>
                 )}
               </div>
             )}

@@ -16,7 +16,7 @@ type Props = {
   transcriptResult: TranscriptResult | null
   transcriptProgress: number | null
   filename: string
-  transcriptLang: TranscriptLang
+  transcriptLang: TranscriptLang | null
   onTranscriptLangChange: (lang: TranscriptLang) => void
 }
 
@@ -165,7 +165,7 @@ export default function ResultsArea({
             {activeTab === 'transcript' && hasTranscript && (
               <>
                 {/* Re-transcribe — shown after completion or error */}
-                {(transcriptStatus === 'done' || transcriptStatus === 'error') && (
+                {(transcriptStatus === 'done' || transcriptStatus === 'error') && transcriptLang && (
                   <button className="btn btn-secondary" onClick={() => onTranscriptLangChange(transcriptLang)}
                     title="Re-transcribe with current language">
                     <RefreshCw size={14} /> Re-transcribe

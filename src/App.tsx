@@ -55,7 +55,7 @@ export default function App() {
   })
   const [params, setParams] = useState<ExtractionParams>(DEFAULT_PARAMS)
   const [transcriptEnabled, setTranscriptEnabled] = useState(false)
-  const [transcriptLang, setTranscriptLang] = useState<TranscriptLang>('en')
+  const [transcriptLang, setTranscriptLang] = useState<TranscriptLang | null>(null)
   const [transcript, setTranscript] = useState<{
     status: TranscriptStatus
     statusMsg: string
@@ -87,14 +87,13 @@ export default function App() {
 
   const handleTranscriptEnabledChange = useCallback((enabled: boolean) => {
     setTranscriptEnabled(enabled)
-    if (enabled && state.file && state.duration > 0) {
-      runTranscription(state.file, transcriptLang, ffmpegInstanceRef.current, ffmpegInputRef.current)
-    } else if (!enabled) {
+    if (!enabled) {
+      setTranscriptLang(null)
       setTranscript({ status: 'idle', statusMsg: '', result: null, downloadProgress: null })
     }
-  }, [state.file, state.duration, transcriptLang, runTranscription])
+  }, [])
 
-  // ── Language change (re-transcribe with new lang) ─────────────────────────
+  // ── Language select (first pick or re-transcribe) ─────────────────────────
 
   const handleLanguageChange = useCallback((lang: TranscriptLang) => {
     setTranscriptLang(lang)
