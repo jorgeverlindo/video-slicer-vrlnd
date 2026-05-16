@@ -10,7 +10,7 @@ import {
   buildTimestamps, extractNative, extractFFmpeg,
   loadFFmpeg, probeWithFFmpeg,
 } from './lib/extractor'
-import type { TranscriptStatus, TranscriptResult } from './lib/transcriber'
+import type { TranscriptStatus, TranscriptResult, TranscriptLang } from './lib/transcriber'
 import { transcribeFile } from './lib/transcriber'
 
 export type MarkedFrame = {
@@ -60,6 +60,7 @@ export default function App() {
     error: null, status: null, showFallbackHelp: false,
   })
   const [params, setParams] = useState<ExtractionParams>(DEFAULT_PARAMS)
+  const [transcriptLang, setTranscriptLang] = useState<TranscriptLang>('en')
   const [transcript, setTranscript] = useState<{
     status: TranscriptStatus
     statusMsg: string
@@ -68,6 +69,31 @@ export default function App() {
   }>({ status: 'idle', statusMsg: '', result: null, downloadProgress: null })
 
   const patch = (partial: Partial<AppState>) => setState((s) => ({ ...s, ...partial }))
+
+  // ── Transcription runner (reusable for auto-start + manual re-transcribe) ──
+
+  const runTranscription = useCallback((file: File, lang: TranscriptLang, ffmpegInst?: import('@ffmpeg/ffmpeg').FFmpeg | null, ffmpegName?: string | null) => {
+    setTranscript({ status: 'loading-model', statusMsg: 'Loading model…', result: null, downloadProgress: null })
+    transcribeFile(
+      file,
+      (status, msg, progress) => setTranscript(prev => ({
+        ...prev, status, statusMsg: msg ?? '',
+        downloadProgress: (status === 'loading-model' || status === 'loading-model-multilingual') ? (progress ?? null) : null,
+      })),
+      ffmpegInst, ffmpegName, lang,
+    ).then(result => {
+      setTranscript({ status: 'done', statusMsg: '', result, downloadProgress: null })
+    }).catch(err => {
+      setTranscript({ status: 'error', statusMsg: String(err instanceof Error ? err.message : err), result: null, downloadProgress: null })
+    })
+  }, [])
+
+  const handleLanguageChange = useCallback((lang: TranscriptLang) => {
+    setTranscriptLang(lang)
+    if (state.file && state.duration > 0) {
+      runTranscription(state.file, lang, ffmpegInstanceRef.current, ffmpegInputRef.current)
+    }
+  }, [state.file, state.duration, runTranscription])
 
   // ── Load video ────────────────────────────────────────────────────────────
 
@@ -92,18 +118,7 @@ export default function App() {
       settled = true
       cleanup()
       patch({ duration: probe.duration, videoMode: 'native', status: null })
-      // Start transcription in background (non-blocking)
-      setTranscript({ status: 'loading-model', statusMsg: 'Downloading model…', result: null, downloadProgress: null })
-      transcribeFile(file, (status, msg, progress) => {
-        setTranscript(prev => ({
-          ...prev, status, statusMsg: msg ?? '',
-          downloadProgress: (status === 'loading-model' || status === 'loading-model-multilingual') ? (progress ?? null) : null,
-        }))
-      }).then(result => {
-        setTranscript({ status: 'done', statusMsg: '', result, downloadProgress: null })
-      }).catch(err => {
-        setTranscript({ status: 'error', statusMsg: String(err instanceof Error ? err.message : err), result: null, downloadProgress: null })
-      })
+      runTranscription(file, transcriptLang)
     }
 
     const onError = async () => {
@@ -117,18 +132,7 @@ export default function App() {
         const { duration, inputName } = await probeWithFFmpeg(ff, file, (msg) => patch({ status: msg }))
         ffmpegInputRef.current = inputName
         patch({ duration, videoMode: 'ffmpeg', status: null })
-        // Start transcription in background (non-blocking)
-        setTranscript({ status: 'loading-model', statusMsg: 'Downloading model…', result: null, downloadProgress: null })
-        transcribeFile(file, (status, msg, progress) => {
-          setTranscript(prev => ({
-          ...prev, status, statusMsg: msg ?? '',
-          downloadProgress: (status === 'loading-model' || status === 'loading-model-multilingual') ? (progress ?? null) : null,
-        }))
-        }, ffmpegInstanceRef.current, ffmpegInputRef.current).then(result => {
-          setTranscript({ status: 'done', statusMsg: '', result, downloadProgress: null })
-        }).catch(err => {
-          setTranscript({ status: 'error', statusMsg: String(err instanceof Error ? err.message : err), result: null, downloadProgress: null })
-        })
+        runTranscription(file, transcriptLang, ffmpegInstanceRef.current, ffmpegInputRef.current)
       } catch (e: unknown) {
         const msg = e instanceof Error ? e.message : String(e)
         patch({ status: null, error: msg, showFallbackHelp: true })
@@ -337,6 +341,8 @@ export default function App() {
           transcriptResult={transcript.result}
           transcriptProgress={transcript.downloadProgress}
           filename={state.file?.name ?? ''}
+          transcriptLang={transcriptLang}
+          onTranscriptLangChange={handleLanguageChange}
         />
 
       </main>

@@ -1,7 +1,7 @@
 import { useState } from 'react'
-import { Copy, Check, Download, Loader2, Mic, ArrowDownToLine } from 'lucide-react'
-import type { TranscriptResult, TranscriptStatus } from '../lib/transcriber'
-import { transcriptToMarkdown } from '../lib/transcriber'
+import { Copy, Check, Download, Loader2, Mic, ArrowDownToLine, RefreshCw } from 'lucide-react'
+import type { TranscriptResult, TranscriptStatus, TranscriptLang } from '../lib/transcriber'
+import { transcriptToMarkdown, TRANSCRIPT_LANGUAGES } from '../lib/transcriber'
 import { triggerDownload } from '../lib/zip'
 
 type Props = {
@@ -10,19 +10,11 @@ type Props = {
   result: TranscriptResult | null
   filename: string
   downloadProgress?: number | null
+  language: TranscriptLang
+  onLanguageChange: (lang: TranscriptLang) => void
 }
 
-const LANGUAGE_FLAGS: Record<string, string> = {
-  portuguese: '🇧🇷', english: '🇬🇧', spanish: '🇪🇸', french: '🇫🇷',
-  german: '🇩🇪', italian: '🇮🇹', japanese: '🇯🇵', chinese: '🇨🇳',
-  korean: '🇰🇷', russian: '🇷🇺', arabic: '🇸🇦', dutch: '🇳🇱',
-}
-
-function formatLanguage(lang: string) {
-  return lang.charAt(0).toUpperCase() + lang.slice(1)
-}
-
-export default function TranscriptPanel({ status, statusMsg, result, filename, downloadProgress }: Props) {
+export default function TranscriptPanel({ status, statusMsg, result, filename, downloadProgress, language, onLanguageChange }: Props) {
   const [copied, setCopied] = useState(false)
 
   if (status === 'idle') return null
@@ -55,21 +47,33 @@ export default function TranscriptPanel({ status, statusMsg, result, filename, d
         display: 'flex', justifyContent: 'space-between', alignItems: 'center',
         gap: 16, flexWrap: 'wrap',
       }}>
-        <div style={{ display: 'flex', alignItems: 'center', gap: 10 }}>
+        <div style={{ display: 'flex', alignItems: 'center', gap: 10, flexWrap: 'wrap' }}>
           <Mic size={15} style={{ color: 'var(--brand)', opacity: 0.8 }} />
           <h2 style={{ lineHeight: 1 }}>Transcription</h2>
 
-          {/* Language badge — shown when done */}
-          {status === 'done' && result?.language && (
-            <span style={{
-              display: 'inline-flex', alignItems: 'center', gap: 5,
-              fontSize: 11, fontWeight: 500,
-              background: 'var(--brand-tint)', color: 'var(--brand)',
-              borderRadius: 99, padding: '2px 9px', border: '1px solid var(--brand-18)',
-            }}>
-              {LANGUAGE_FLAGS[result.language] ?? '🌐'} {formatLanguage(result.language)}
-            </span>
-          )}
+          {/* Language selector */}
+          <div style={{ display: 'flex', alignItems: 'center', gap: 6 }}>
+            <select
+              value={language}
+              onChange={e => onLanguageChange(e.target.value as TranscriptLang)}
+              disabled={isLoading}
+              style={{
+                height: 26, padding: '0 8px',
+                fontSize: 12, fontFamily: 'inherit',
+                background: 'var(--gray-100)', color: 'var(--text-primary)',
+                border: '1px solid var(--border)', borderRadius: 'var(--radius-pill)',
+                cursor: isLoading ? 'not-allowed' : 'pointer',
+                outline: 'none',
+              }}
+            >
+              {TRANSCRIPT_LANGUAGES.map(l => (
+                <option key={l.code} value={l.code}>{l.flag} {l.label}</option>
+              ))}
+            </select>
+            {language !== 'en' && (
+              <span style={{ fontSize: 10, color: 'var(--text-secondary)', opacity: 0.7 }}>~460 MB</span>
+            )}
+          </div>
 
           {/* Model cached badge */}
           {status === 'model-cached' && (
@@ -79,7 +83,7 @@ export default function TranscriptPanel({ status, statusMsg, result, filename, d
               background: 'var(--success-bg, #ecfdf5)', color: 'var(--success-fg, #166534)',
               borderRadius: 99, padding: '2px 8px',
             }}>
-              <Check size={10} /> Model cached
+              <Check size={10} /> cached
             </span>
           )}
 
@@ -92,17 +96,25 @@ export default function TranscriptPanel({ status, statusMsg, result, filename, d
           )}
         </div>
 
-        {result && (
-          <div style={{ display: 'flex', gap: 8 }}>
-            <button className="btn btn-secondary" onClick={copyText}>
-              {copied ? <Check size={15} /> : <Copy size={15} />}
-              {copied ? 'Copied!' : 'Copy text'}
+        <div style={{ display: 'flex', gap: 8, marginLeft: 'auto' }}>
+          {(status === 'done' || status === 'error') && (
+            <button className="btn btn-secondary" onClick={() => onLanguageChange(language)}
+              title="Re-transcribe with current language">
+              <RefreshCw size={14} /> Re-transcribe
             </button>
-            <button className="btn btn-secondary" onClick={downloadMd}>
-              <Download size={15} /> Download .md
-            </button>
-          </div>
-        )}
+          )}
+          {result && (
+            <>
+              <button className="btn btn-secondary" onClick={copyText}>
+                {copied ? <Check size={15} /> : <Copy size={15} />}
+                {copied ? 'Copied!' : 'Copy'}
+              </button>
+              <button className="btn btn-secondary" onClick={downloadMd}>
+                <Download size={15} /> .md
+              </button>
+            </>
+          )}
+        </div>
       </div>
 
       {/* ── Download progress (tiny or multilingual) ── */}

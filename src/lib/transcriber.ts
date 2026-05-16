@@ -8,7 +8,6 @@ export type TranscriptStatus =
   | 'idle'
   | 'loading-model'
   | 'model-cached'
-  | 'detecting-language'
   | 'loading-model-multilingual'
   | 'decoding-audio'
   | 'transcribing'
@@ -17,11 +16,24 @@ export type TranscriptStatus =
 
 export type OnStatusFn = (status: TranscriptStatus, msg?: string, progress?: number | null) => void
 
+// Language options exposed to the UI
+export const TRANSCRIPT_LANGUAGES = [
+  { code: 'en', label: 'English',    flag: '🇬🇧', model: 'tiny'  },
+  { code: 'pt', label: 'Portuguese', flag: '🇧🇷', model: 'small' },
+  { code: 'es', label: 'Spanish',    flag: '🇪🇸', model: 'small' },
+  { code: 'fr', label: 'French',     flag: '🇫🇷', model: 'small' },
+  { code: 'de', label: 'German',     flag: '🇩🇪', model: 'small' },
+  { code: 'it', label: 'Italian',    flag: '🇮🇹', model: 'small' },
+  { code: 'ja', label: 'Japanese',   flag: '🇯🇵', model: 'small' },
+  { code: 'zh', label: 'Chinese',    flag: '🇨🇳', model: 'small' },
+] as const
+
+export type TranscriptLang = typeof TRANSCRIPT_LANGUAGES[number]['code']
+
 // ── Model cache ───────────────────────────────────────────────────────────
 let asrTiny:  Awaited<ReturnType<typeof pipeline>> | null = null
 let asrSmall: Awaited<ReturnType<typeof pipeline>> | null = null
 
-// ── Progress tracker helper ───────────────────────────────────────────────
 function makeProgressCallback(onStatus: OnStatusFn, status: TranscriptStatus, label: string) {
   const fileSizes = new Map<string, number>()
   const fileLoaded = new Map<string, number>()
@@ -37,7 +49,6 @@ function makeProgressCallback(onStatus: OnStatusFn, status: TranscriptStatus, la
   }
 }
 
-// ── Audio extraction helper ───────────────────────────────────────────────
 async function extractSamples(
   file: File,
   ffmpegInstance?: import('@ffmpeg/ffmpeg').FFmpeg | null,
@@ -49,13 +60,10 @@ async function extractSamples(
     try {
       const audioBuffer = await ctx.decodeAudioData(arrayBuffer)
       return audioBuffer.getChannelData(0)
-    } finally {
-      ctx.close()
-    }
+    } finally { ctx.close() }
   } catch {
-    if (!ffmpegInstance || !ffmpegInputName) {
+    if (!ffmpegInstance || !ffmpegInputName)
       throw new Error('Cannot decode audio from this video format. Try an MP4 or WebM file.')
-    }
     await ffmpegInstance.exec(['-i', ffmpegInputName, '-vn', '-ar', '16000', '-ac', '1', '-f', 'wav', 'audio_out.wav'])
     const data = await ffmpegInstance.readFile('audio_out.wav')
     try { await ffmpegInstance.deleteFile('audio_out.wav') } catch { /* ignore */ }
@@ -64,9 +72,7 @@ async function extractSamples(
     try {
       const audioBuffer = await ctx.decodeAudioData(wavBuffer)
       return audioBuffer.getChannelData(0)
-    } finally {
-      ctx.close()
-    }
+    } finally { ctx.close() }
   }
 }
 
@@ -76,103 +82,69 @@ export async function transcribeFile(
   onStatus: OnStatusFn,
   ffmpegInstance?: import('@ffmpeg/ffmpeg').FFmpeg | null,
   ffmpegInputName?: string | null,
+  language: TranscriptLang = 'en',
 ): Promise<TranscriptResult> {
 
-  // ── 1. Load whisper-tiny (always — small, fast, used for detection + English) ──
-  if (asrTiny) {
-    onStatus('model-cached', 'Model ready')
-  } else {
-    onStatus('loading-model', 'Downloading model…', null)
-    asrTiny = await pipeline(
-      'automatic-speech-recognition',
-      'Xenova/whisper-tiny',
-      { dtype: 'fp32', progress_callback: makeProgressCallback(onStatus, 'loading-model', 'Downloading model…') },
-    )
-  }
+  const langMeta = TRANSCRIPT_LANGUAGES.find(l => l.code === language)!
+  const useSmall = langMeta.model === 'small'
 
-  // ── 2. Decode audio ───────────────────────────────────────────────────────
-  onStatus('decoding-audio', 'Decoding audio…')
-  const samples = await extractSamples(file, ffmpegInstance, ffmpegInputName)
-
-  // ── 3. Language detection on first 30 s ──────────────────────────────────
-  onStatus('detecting-language', 'Detecting language…')
-  const DETECT_SAMPLES = Math.min(samples.length, 30 * 16_000) // 30 s @ 16 kHz
-  const shortSample = samples.slice(0, DETECT_SAMPLES)
-
-  const detectionRaw = await (asrTiny as any)(shortSample, {
-    task: 'transcribe',
-    return_timestamps: false,
-    // No language → Whisper auto-detects and returns `language` in result
-  })
-  const detectedLanguage: string = (detectionRaw as any).language ?? 'english'
-
-  // ── 4. Branch: English → tiny  |  Everything else → small ───────────────
-  let asr: Awaited<ReturnType<typeof pipeline>>
-  let transcribeLanguage: string | undefined
-
-  if (detectedLanguage === 'english') {
-    asr = asrTiny
-    // English: tiny is great, no extra download needed
-  } else {
-    // Non-English: upgrade to whisper-small
+  if (useSmall) {
+    // ── Non-English: load whisper-small ────────────────────────────────────
     if (asrSmall) {
-      onStatus('model-cached', `${formatLanguage(detectedLanguage)} detected — enhanced model ready`)
+      onStatus('model-cached', 'Enhanced model ready')
     } else {
-      onStatus(
-        'loading-model-multilingual',
-        `${formatLanguage(detectedLanguage)} detected — downloading enhanced model…`,
-        null,
-      )
+      onStatus('loading-model-multilingual', `Loading ${langMeta.flag} ${langMeta.label} model…`, null)
       asrSmall = await pipeline(
         'automatic-speech-recognition',
         'Xenova/whisper-small',
-        {
-          dtype: 'fp32',
-          progress_callback: makeProgressCallback(
-            onStatus,
-            'loading-model-multilingual',
-            `${formatLanguage(detectedLanguage)} detected — downloading enhanced model…`,
-          ),
-        },
+        { dtype: 'fp32', progress_callback: makeProgressCallback(onStatus, 'loading-model-multilingual', `Loading ${langMeta.flag} ${langMeta.label} model…`) },
       )
     }
-    asr = asrSmall
-    transcribeLanguage = detectedLanguage
+  } else {
+    // ── English: load whisper-tiny ─────────────────────────────────────────
+    if (asrTiny) {
+      onStatus('model-cached', 'Model ready')
+    } else {
+      onStatus('loading-model', 'Downloading model…', null)
+      asrTiny = await pipeline(
+        'automatic-speech-recognition',
+        'Xenova/whisper-tiny',
+        { dtype: 'fp32', progress_callback: makeProgressCallback(onStatus, 'loading-model', 'Downloading model…') },
+      )
+    }
   }
 
-  // ── 5. Full transcription ─────────────────────────────────────────────────
-  onStatus('transcribing', 'Transcribing…')
+  const asr = useSmall ? asrSmall! : asrTiny!
+
+  // Decode audio
+  onStatus('decoding-audio', 'Decoding audio…')
+  const samples = await extractSamples(file, ffmpegInstance, ffmpegInputName)
+
+  // Transcribe
+  onStatus('transcribing', `Transcribing in ${langMeta.label}…`)
   const result = await (asr as any)(samples, {
     task: 'transcribe',
-    ...(transcribeLanguage ? { language: transcribeLanguage } : {}),
+    language,
     chunk_length_s: 30,
     stride_length_s: 5,
     return_timestamps: true,
   })
 
   onStatus('done')
-  return { ...(result as TranscriptResult), language: detectedLanguage }
-}
-
-// ── Helpers ───────────────────────────────────────────────────────────────
-function formatLanguage(lang: string): string {
-  return lang.charAt(0).toUpperCase() + lang.slice(1)
+  return { ...(result as TranscriptResult), language: langMeta.label.toLowerCase() }
 }
 
 export function transcriptToMarkdown(result: TranscriptResult, filename: string): string {
+  const langLine = result.language
+    ? `**Language:** ${result.language.charAt(0).toUpperCase() + result.language.slice(1)}\n\n`
+    : ''
   const lines = [
-    `# Transcript — ${filename}`,
-    '',
-    result.language ? `**Language detected:** ${formatLanguage(result.language)}` : '',
-    '',
-    '## Full text',
-    '',
-    result.text.trim(),
-    '',
-    '---',
-    '',
-    '## Segments',
-    '',
+    `# Transcript — ${filename}`, '',
+    langLine,
+    '## Full text', '',
+    result.text.trim(), '',
+    '---', '',
+    '## Segments', '',
   ]
   for (const chunk of result.chunks ?? []) {
     const [s, e] = chunk.timestamp
@@ -187,8 +159,9 @@ function fmtTime(s: number): string {
   const h = Math.floor(s / 3600)
   const m = Math.floor((s % 3600) / 60)
   const sec = Math.floor(s % 60)
-  if (h > 0) return `${h}:${pad(m)}:${pad(sec)}`
-  return `${pad(m)}:${pad(sec)}`
+  if (h > 0) return `${h}:${String(m).padStart(2, '0')}:${String(sec).padStart(2, '0')}`
+  return `${String(m).padStart(2, '0')}:${String(sec).padStart(2, '0')}`
 }
 
 function pad(n: number) { return String(n).padStart(2, '0') }
+void pad

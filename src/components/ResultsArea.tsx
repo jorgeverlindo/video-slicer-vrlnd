@@ -1,9 +1,9 @@
 import { useState, useEffect, useRef } from 'react'
-import { Download, X, Copy, Check, Loader2, Mic, FileImage, ArrowDownToLine } from 'lucide-react'
+import { Download, X, Copy, Check, Loader2, Mic, FileImage, ArrowDownToLine, RefreshCw } from 'lucide-react'
 import type { Frame } from '../lib/extractor'
 import { fmtTimecode } from '../lib/extractor'
-import type { TranscriptResult, TranscriptStatus } from '../lib/transcriber'
-import { transcriptToMarkdown } from '../lib/transcriber'
+import type { TranscriptResult, TranscriptStatus, TranscriptLang } from '../lib/transcriber'
+import { transcriptToMarkdown, TRANSCRIPT_LANGUAGES } from '../lib/transcriber'
 import { frameFilename, packAsZip, triggerDownload } from '../lib/zip'
 
 type Tab = 'frames' | 'transcript'
@@ -16,12 +16,14 @@ type Props = {
   transcriptResult: TranscriptResult | null
   transcriptProgress: number | null
   filename: string
+  transcriptLang: TranscriptLang
+  onTranscriptLangChange: (lang: TranscriptLang) => void
 }
 
 export default function ResultsArea({
   frames, onClear,
   transcriptStatus, transcriptMsg, transcriptResult, transcriptProgress,
-  filename,
+  filename, transcriptLang, onTranscriptLangChange,
 }: Props) {
   const [activeTab, setActiveTab]         = useState<Tab>('transcript')
   const [packing, setPacking]             = useState(false)
@@ -155,15 +157,52 @@ export default function ResultsArea({
               </>
             )}
 
-            {activeTab === 'transcript' && transcriptResult && (
+            {activeTab === 'transcript' && hasTranscript && (
               <>
-                <button className="btn btn-secondary" onClick={copyTranscript}>
-                  {copied ? <Check size={15} /> : <Copy size={15} />}
-                  {copied ? 'Copied!' : 'Copy text'}
-                </button>
-                <button className="btn btn-secondary" onClick={downloadMd}>
-                  <Download size={15} /> Download .md
-                </button>
+                {/* Language selector */}
+                <label style={{ display: 'flex', alignItems: 'center', gap: 6 }}>
+                  <select
+                    value={transcriptLang}
+                    onChange={e => onTranscriptLangChange(e.target.value as TranscriptLang)}
+                    disabled={txLoading}
+                    style={{
+                      height: 28, padding: '0 8px',
+                      fontSize: 12, fontFamily: 'inherit',
+                      background: 'var(--gray-100)', color: 'var(--text-primary)',
+                      border: '1px solid var(--border)', borderRadius: 'var(--radius-pill)',
+                      cursor: txLoading ? 'not-allowed' : 'pointer',
+                      outline: 'none',
+                    }}
+                  >
+                    {TRANSCRIPT_LANGUAGES.map(l => (
+                      <option key={l.code} value={l.code}>{l.flag} {l.label}</option>
+                    ))}
+                  </select>
+                  {transcriptLang !== 'en' && (
+                    <span style={{ fontSize: 10, color: 'var(--text-secondary)', opacity: 0.7, whiteSpace: 'nowrap' }}>~460 MB</span>
+                  )}
+                </label>
+
+                {/* Re-transcribe */}
+                {(transcriptStatus === 'done' || transcriptStatus === 'error') && (
+                  <button className="btn btn-secondary" onClick={() => onTranscriptLangChange(transcriptLang)}
+                    title="Re-transcribe with current language">
+                    <RefreshCw size={14} /> Re-transcribe
+                  </button>
+                )}
+
+                {/* Copy / Download */}
+                {transcriptResult && (
+                  <>
+                    <button className="btn btn-secondary" onClick={copyTranscript}>
+                      {copied ? <Check size={15} /> : <Copy size={15} />}
+                      {copied ? 'Copied!' : 'Copy text'}
+                    </button>
+                    <button className="btn btn-secondary" onClick={downloadMd}>
+                      <Download size={15} /> Download .md
+                    </button>
+                  </>
+                )}
               </>
             )}
           </div>
