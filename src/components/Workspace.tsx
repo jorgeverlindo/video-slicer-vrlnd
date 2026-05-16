@@ -1,5 +1,5 @@
 import { useEffect, useState } from 'react'
-import { Sliders, Video, MapPin, X, ChevronDown, Loader2, ArrowDownToLine } from 'lucide-react'
+import { Sliders, Video, MapPin, X, ChevronDown } from 'lucide-react'
 import type { ExtractionParams } from '../lib/extractor'
 import { fmtDuration, fmtTimecode } from '../lib/extractor'
 import type { MarkedFrame } from '../App'
@@ -292,61 +292,68 @@ export default function Workspace({
             {transcriptEnabled && (() => {
               const isActive = transcriptStatus !== 'idle' && transcriptStatus !== 'done' && transcriptStatus !== 'error'
               const isDownloading = transcriptStatus === 'loading-model' || transcriptStatus === 'loading-model-multilingual'
-              return (
-                <div style={{ display: 'flex', alignItems: 'center', gap: 10, minWidth: 0 }}>
+              const statusText = isDownloading && transcriptProgress != null
+                ? `Downloading model… ${transcriptProgress}%`
+                : transcriptMsg
 
-                  {/* Dropdown */}
-                  <div style={{ position: 'relative', flexShrink: 0 }}>
-                    <select
-                      value={transcriptLang ?? ''}
-                      onChange={e => { if (e.target.value) onTranscriptLangChange(e.target.value as TranscriptLang) }}
-                      style={{
-                        height: 28, padding: '0 26px 0 10px',
-                        fontSize: 12, fontFamily: 'inherit',
-                        background: 'var(--gray-100)',
-                        color: transcriptLang ? 'var(--text-primary)' : 'var(--text-placeholder)',
-                        border: '1px solid var(--border)', borderRadius: 'var(--radius-pill)',
-                        cursor: 'pointer', outline: 'none', appearance: 'none',
-                      }}
-                    >
-                      <option value="" disabled>Select language</option>
-                      <option value="en">🇬🇧 English</option>
-                      <option value="pt">🇧🇷 Portuguese</option>
-                    </select>
-                    <ChevronDown size={11} style={{
-                      position: 'absolute', right: 8, top: '50%',
-                      transform: 'translateY(-50%)', pointerEvents: 'none',
-                      color: 'var(--text-secondary)',
-                    }} />
+              return (
+                <div>
+                  {/* Row: dropdown + ~460 MB hint */}
+                  <div style={{ display: 'flex', alignItems: 'center', gap: 10 }}>
+                    <div style={{ position: 'relative', flexShrink: 0 }}>
+                      <select
+                        value={transcriptLang ?? ''}
+                        onChange={e => { if (e.target.value) onTranscriptLangChange(e.target.value as TranscriptLang) }}
+                        style={{
+                          height: 28, padding: '0 26px 0 10px',
+                          fontSize: 12, fontFamily: 'inherit',
+                          background: 'var(--gray-100)',
+                          color: transcriptLang ? 'var(--text-primary)' : 'var(--text-placeholder)',
+                          border: '1px solid var(--border)', borderRadius: 'var(--radius-pill)',
+                          cursor: 'pointer', outline: 'none', appearance: 'none',
+                        }}
+                      >
+                        <option value="" disabled>Select language</option>
+                        <option value="en">🇬🇧 English</option>
+                        <option value="pt">🇧🇷 Portuguese</option>
+                      </select>
+                      <ChevronDown size={11} style={{
+                        position: 'absolute', right: 8, top: '50%',
+                        transform: 'translateY(-50%)', pointerEvents: 'none',
+                        color: 'var(--text-secondary)',
+                      }} />
+                    </div>
+
+                    {!isActive && transcriptLang && transcriptLang !== 'en' && transcriptStatus === 'idle' && (
+                      <span style={{ fontSize: 10, color: 'var(--text-secondary)', opacity: 0.7 }}>
+                        ~460 MB
+                      </span>
+                    )}
                   </div>
 
-                  {/* Inline status */}
+                  {/* Status row — Body 1, shown while transcription is running */}
                   {isActive && (
                     <div style={{
-                      display: 'flex', alignItems: 'center', gap: 5,
-                      fontSize: 11, color: 'var(--text-secondary)', fontWeight: 300,
-                      minWidth: 0, overflow: 'hidden',
+                      display: 'flex', alignItems: 'center', gap: 10,
+                      marginTop: 14,
                     }}>
-                      {isDownloading ? (
-                        <ArrowDownToLine size={12} style={{ flexShrink: 0, color: 'var(--brand)' }} />
-                      ) : (
-                        <Loader2 size={12} style={{ flexShrink: 0, animation: 'spin 1s linear infinite' }} />
-                      )}
-                      <span style={{ whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' }}>
-                        {isDownloading && transcriptProgress != null
-                          ? `${transcriptProgress}%`
-                          : transcriptMsg}
+                      {/* Custom circular spinner */}
+                      <div style={{
+                        flexShrink: 0,
+                        width: 18, height: 18, borderRadius: '50%',
+                        border: '1.5px solid var(--border)',
+                        borderTopColor: 'var(--brand)',
+                        animation: 'spin 0.75s linear infinite',
+                      }} />
+                      <span style={{
+                        fontSize: 20, lineHeight: 1.3,
+                        fontFamily: "'Macklin Sans', 'DM Sans', sans-serif",
+                        fontWeight: 300, color: 'var(--text-primary)',
+                      }}>
+                        {statusText}
                       </span>
                     </div>
                   )}
-
-                  {/* ~460 MB hint — shown before transcription starts */}
-                  {!isActive && transcriptLang && transcriptLang !== 'en' && transcriptStatus === 'idle' && (
-                    <span style={{ fontSize: 10, color: 'var(--text-secondary)', opacity: 0.7, flexShrink: 0 }}>
-                      ~460 MB
-                    </span>
-                  )}
-
                 </div>
               )
             })()}
