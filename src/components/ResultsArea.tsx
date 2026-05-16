@@ -3,7 +3,7 @@ import { Download, X, Copy, Check, Loader2, Mic, FileImage, ArrowDownToLine, Ref
 import type { Frame } from '../lib/extractor'
 import { fmtTimecode } from '../lib/extractor'
 import type { TranscriptResult, TranscriptStatus, TranscriptLang } from '../lib/transcriber'
-import { transcriptToMarkdown, TRANSCRIPT_LANGUAGES } from '../lib/transcriber'
+import { transcriptToMarkdown } from '../lib/transcriber'
 import { frameFilename, packAsZip, triggerDownload } from '../lib/zip'
 
 type Tab = 'frames' | 'transcript'
@@ -159,31 +159,7 @@ export default function ResultsArea({
 
             {activeTab === 'transcript' && hasTranscript && (
               <>
-                {/* Language selector */}
-                <label style={{ display: 'flex', alignItems: 'center', gap: 6 }}>
-                  <select
-                    value={transcriptLang}
-                    onChange={e => onTranscriptLangChange(e.target.value as TranscriptLang)}
-                    disabled={txLoading}
-                    style={{
-                      height: 28, padding: '0 8px',
-                      fontSize: 12, fontFamily: 'inherit',
-                      background: 'var(--gray-100)', color: 'var(--text-primary)',
-                      border: '1px solid var(--border)', borderRadius: 'var(--radius-pill)',
-                      cursor: txLoading ? 'not-allowed' : 'pointer',
-                      outline: 'none',
-                    }}
-                  >
-                    {TRANSCRIPT_LANGUAGES.map(l => (
-                      <option key={l.code} value={l.code}>{l.flag} {l.label}</option>
-                    ))}
-                  </select>
-                  {transcriptLang !== 'en' && (
-                    <span style={{ fontSize: 10, color: 'var(--text-secondary)', opacity: 0.7, whiteSpace: 'nowrap' }}>~460 MB</span>
-                  )}
-                </label>
-
-                {/* Re-transcribe */}
+                {/* Re-transcribe — shown after completion or error */}
                 {(transcriptStatus === 'done' || transcriptStatus === 'error') && (
                   <button className="btn btn-secondary" onClick={() => onTranscriptLangChange(transcriptLang)}
                     title="Re-transcribe with current language">

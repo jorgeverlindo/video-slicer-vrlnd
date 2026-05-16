@@ -3,6 +3,7 @@ import { Sliders, Video, MapPin, X } from 'lucide-react'
 import type { ExtractionParams } from '../lib/extractor'
 import { fmtDuration, fmtTimecode } from '../lib/extractor'
 import type { MarkedFrame } from '../App'
+import type { TranscriptLang } from '../lib/transcriber'
 
 type VideoMode = 'native' | 'ffmpeg'
 
@@ -19,12 +20,18 @@ type Props = {
   markedFrames: MarkedFrame[]
   onMark: (timestamp: number, thumbnail: string) => void
   onRemoveMark: (id: number) => void
+  transcriptEnabled: boolean
+  onTranscriptEnabledChange: (v: boolean) => void
+  transcriptLang: TranscriptLang
+  onTranscriptLangChange: (lang: TranscriptLang) => void
 }
 
 export default function Workspace({
   file, videoMode, duration, videoRef,
   params, onParamsChange, extracting, progress, onExtract,
   markedFrames, onMark, onRemoveMark,
+  transcriptEnabled, onTranscriptEnabledChange,
+  transcriptLang, onTranscriptLangChange,
 }: Props) {
   const [videoMeta, setVideoMeta] = useState('')
 
@@ -255,6 +262,51 @@ export default function Workspace({
           )}
 
           <div style={{ flex: 1, minHeight: 0 }} />
+
+          {/* ── Audio Transcript opt-in ── */}
+          <div style={{
+            borderTop: '1px solid var(--border)',
+            paddingTop: 16, marginBottom: 16, flexShrink: 0,
+          }}>
+            <label style={{
+              display: 'flex', alignItems: 'center', gap: 8,
+              cursor: 'pointer', userSelect: 'none',
+            }}>
+              <input
+                type="checkbox"
+                checked={transcriptEnabled}
+                onChange={e => onTranscriptEnabledChange(e.target.checked)}
+                style={{ accentColor: 'var(--brand)', width: 14, height: 14, flexShrink: 0 }}
+              />
+              <span style={{ fontSize: 12, fontWeight: 500, color: 'var(--text-primary)' }}>
+                Audio Transcript
+              </span>
+            </label>
+
+            {transcriptEnabled && (
+              <div style={{ display: 'flex', alignItems: 'center', gap: 8, marginTop: 10 }}>
+                <select
+                  value={transcriptLang}
+                  onChange={e => onTranscriptLangChange(e.target.value as TranscriptLang)}
+                  style={{
+                    height: 28, padding: '0 8px',
+                    fontSize: 12, fontFamily: 'inherit',
+                    background: 'var(--gray-100)', color: 'var(--text-primary)',
+                    border: '1px solid var(--border)', borderRadius: 'var(--radius-pill)',
+                    cursor: 'pointer', outline: 'none',
+                  }}
+                >
+                  <option value="en">🇬🇧 English</option>
+                  <option value="pt">🇧🇷 Portuguese</option>
+                </select>
+                {transcriptLang !== 'en' && (
+                  <span style={{ fontSize: 10, color: 'var(--text-secondary)', opacity: 0.7 }}>
+                    ~460 MB
+                  </span>
+                )}
+              </div>
+            )}
+          </div>
 
           {/* JPEG quality — flexShrink: 0 keeps it anchored regardless of list height */}
           <div className="field" style={{ marginBottom: 24, marginTop: 16, flexShrink: 0 }}>

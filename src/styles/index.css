@@ -395,7 +395,7 @@ video {
 
 /* ── Footer ─────────────────────────────────────────────────────────────── */
 footer {
-  max-width: 1200px; margin: 64px auto 0; padding: 24px 24px 40px;
+  width: 80%; margin: 64px auto 0; padding: 24px 0 40px;
   border-top: 1px solid var(--border);
   display: flex; justify-content: space-between; align-items: center;
   flex-wrap: wrap; gap: 16px; font-size: 12px; color: var(--text-placeholder);

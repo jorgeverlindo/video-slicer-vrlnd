@@ -41,12 +41,6 @@ const DEFAULT_PARAMS: ExtractionParams = {
   quality: 0.85,
 }
 
-const months = ['Jan','Feb','Mar','Apr','May','Jun','Jul','Aug','Sep','Oct','Nov','Dec']
-function footerDate() {
-  const d = new Date()
-  return `${months[d.getMonth()]} ${d.getFullYear()}`
-}
-
 export default function App() {
   const { theme, toggle: toggleTheme } = useTheme()
   const videoRef = useRef<HTMLVideoElement>(null)
@@ -60,6 +54,7 @@ export default function App() {
     error: null, status: null, showFallbackHelp: false,
   })
   const [params, setParams] = useState<ExtractionParams>(DEFAULT_PARAMS)
+  const [transcriptEnabled, setTranscriptEnabled] = useState(false)
   const [transcriptLang, setTranscriptLang] = useState<TranscriptLang>('en')
   const [transcript, setTranscript] = useState<{
     status: TranscriptStatus
@@ -70,7 +65,7 @@ export default function App() {
 
   const patch = (partial: Partial<AppState>) => setState((s) => ({ ...s, ...partial }))
 
-  // ── Transcription runner (reusable for auto-start + manual re-transcribe) ──
+  // ── Transcription runner ──────────────────────────────────────────────────
 
   const runTranscription = useCallback((file: File, lang: TranscriptLang, ffmpegInst?: import('@ffmpeg/ffmpeg').FFmpeg | null, ffmpegName?: string | null) => {
     setTranscript({ status: 'loading-model', statusMsg: 'Loading model…', result: null, downloadProgress: null })
@@ -87,6 +82,19 @@ export default function App() {
       setTranscript({ status: 'error', statusMsg: String(err instanceof Error ? err.message : err), result: null, downloadProgress: null })
     })
   }, [])
+
+  // ── Transcript opt-in toggle ──────────────────────────────────────────────
+
+  const handleTranscriptEnabledChange = useCallback((enabled: boolean) => {
+    setTranscriptEnabled(enabled)
+    if (enabled && state.file && state.duration > 0) {
+      runTranscription(state.file, transcriptLang, ffmpegInstanceRef.current, ffmpegInputRef.current)
+    } else if (!enabled) {
+      setTranscript({ status: 'idle', statusMsg: '', result: null, downloadProgress: null })
+    }
+  }, [state.file, state.duration, transcriptLang, runTranscription])
+
+  // ── Language change (re-transcribe with new lang) ─────────────────────────
 
   const handleLanguageChange = useCallback((lang: TranscriptLang) => {
     setTranscriptLang(lang)
@@ -113,12 +121,13 @@ export default function App() {
       URL.revokeObjectURL(url)
     }
 
+    // Read transcriptEnabled from a ref so the callback always sees fresh value
     const onReady = () => {
       if (settled || !probe.videoWidth) return
       settled = true
       cleanup()
       patch({ duration: probe.duration, videoMode: 'native', status: null })
-      runTranscription(file, transcriptLang)
+      // transcription triggered only if user opted in
     }
 
     const onError = async () => {
@@ -132,7 +141,6 @@ export default function App() {
         const { duration, inputName } = await probeWithFFmpeg(ff, file, (msg) => patch({ status: msg }))
         ffmpegInputRef.current = inputName
         patch({ duration, videoMode: 'ffmpeg', status: null })
-        runTranscription(file, transcriptLang, ffmpegInstanceRef.current, ffmpegInputRef.current)
       } catch (e: unknown) {
         const msg = e instanceof Error ? e.message : String(e)
         patch({ status: null, error: msg, showFallbackHelp: true })
@@ -220,8 +228,6 @@ export default function App() {
             A tool by{' '}
             <a
               href="https://jorgeverlindo.design"
-              target="_blank"
-              rel="noopener noreferrer"
               style={{
                 color: 'var(--brand)',
                 textDecoration: 'none',
@@ -307,6 +313,7 @@ export default function App() {
                 error: null, status: null, showFallbackHelp: false,
               })
               setTranscript({ status: 'idle', statusMsg: '', result: null, downloadProgress: null })
+              setTranscriptEnabled(false)
               if (videoRef.current) videoRef.current.src = ''
             }}>
               Try another file
@@ -329,6 +336,10 @@ export default function App() {
             markedFrames={state.markedFrames}
             onMark={handleMark}
             onRemoveMark={handleRemoveMark}
+            transcriptEnabled={transcriptEnabled}
+            onTranscriptEnabledChange={handleTranscriptEnabledChange}
+            transcriptLang={transcriptLang}
+            onTranscriptLangChange={handleLanguageChange}
           />
         )}
 
@@ -349,27 +360,10 @@ export default function App() {
 
       <footer>
         <div className="footer-left">
-          <img
-            src="/logo.svg"
-            alt=""
-            width={16}
-            height={16}
-            aria-hidden="true"
-            className="jv-logo"
-            style={{ display: 'block', opacity: 0.7 }}
-          />
-          <a
-            href="https://jorgeverlindo.design"
-            target="_blank"
-            rel="noopener noreferrer"
-            style={{ color: 'inherit', textDecoration: 'none' }}
-          >
-            jorgeverlindo.design
-          </a>
+          Jorge Verlindo 2026
         </div>
         <div className="footer-right">
           <span className="footer-status"><span className="dot" /> All processing happens in your browser</span>
-          <span>{footerDate()}</span>
         </div>
       </footer>
     </>

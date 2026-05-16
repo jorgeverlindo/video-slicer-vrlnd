@@ -11,8 +11,6 @@ export default function Navbar({ theme, onToggleTheme }: NavbarProps) {
       {/* Brand — logo mark + name, links to portfolio */}
       <a
         href="https://jorgeverlindo.design"
-        target="_blank"
-        rel="noopener noreferrer"
         style={{
           display: 'flex',
           alignItems: 'center',
