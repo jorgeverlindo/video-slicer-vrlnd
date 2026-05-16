@@ -455,8 +455,6 @@ footer {
     gap: 10px;
   }
 
-  /* Hide floating copy — mobile uses tab bar action instead */
-  .transcript-copy-float { display: none; }
 }
 
 @media (max-width: 480px) {

@@ -328,18 +328,6 @@ export default function ResultsArea({
                 }
               </div>
 
-              {/* Sticky copy button — follows scroll like Claude's code block button */}
-              <div className="transcript-copy-float" style={{ position: 'sticky', top: 80, flexShrink: 0 }}>
-                <button
-                  className="btn btn-secondary"
-                  onClick={copyTranscript}
-                  title={copied ? 'Copied!' : 'Copy transcript'}
-                  style={{ width: 40, height: 40, padding: 0 }}
-                >
-                  {copied ? <Check size={15} /> : <Copy size={15} />}
-                </button>
-              </div>
-
             </div>
           )}
         </>
