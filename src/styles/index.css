@@ -112,24 +112,25 @@ h2 {
 /* ── Buttons ────────────────────────────────────────────────────────────── */
 .btn {
   display: inline-flex; align-items: center; justify-content: center; gap: 6px;
-  height: 36px; padding: 0 20px;
-  font-family: 'Macklin Sans', 'DM Sans', sans-serif; font-size: 13px; font-weight: 300;
-  line-height: 22px; letter-spacing: 0.08em; text-transform: uppercase;
-  border-radius: var(--radius-pill); border: none;
+  height: auto; padding: 10px 16px;
+  font-family: 'Macklin Sans', 'DM Sans', sans-serif;
+  font-size: 14px; font-weight: 300;
+  line-height: 1.2; letter-spacing: 0; text-transform: uppercase;
+  border-radius: var(--radius-btn); border: none;
   cursor: pointer; transition: var(--t-fast);
   white-space: nowrap; text-decoration: none; user-select: none;
 }
-.btn-primary { background: var(--brand); color: var(--white); }
-.btn-primary:hover:not(:disabled) { background: var(--brand-hover); }
-.btn-primary:active:not(:disabled) { background: var(--brand-active); }
-.btn-primary:disabled { background: rgba(70,67,62,0.35); cursor: not-allowed; }
+.btn-primary { background: var(--brand); color: var(--app-bg); }
+.btn-primary:hover:not(:disabled) { opacity: 0.82; }
+.btn-primary:active:not(:disabled) { opacity: 0.68; }
+.btn-primary:disabled { background: rgba(70,67,62,0.35); cursor: not-allowed; color: var(--app-bg); }
 .btn-secondary {
-  background: transparent; color: var(--brand);
-  border: 1px solid var(--brand-35);
+  background: var(--app-bg); color: var(--brand);
+  border: 1px solid var(--border);
 }
-.btn-secondary:hover { background: var(--brand-06); border-color: var(--brand); }
+.btn-secondary:hover { background: var(--brand-tint); border-color: var(--brand-35); }
 .btn-secondary:active { background: var(--brand-10); }
-.btn-ghost { background: transparent; color: var(--text-primary); }
+.btn-ghost { background: transparent; color: var(--text-primary); border: none; }
 .btn-ghost:hover { background: rgba(0,0,0,0.05); }
 .btn-block { width: 100%; }
 
@@ -141,8 +142,7 @@ h2 {
   box-shadow: var(--shadow-xs);
 }
 .card-header {
-  padding: 14px 20px;
-  border-bottom: 1px solid var(--border);
+  padding: 16px 20px 10px;
   display: flex; justify-content: space-between; align-items: center; gap: 12px;
 }
 .card-title {
@@ -155,7 +155,7 @@ h2 {
   font-variant-numeric: tabular-nums;
   font-family: 'JetBrains Mono', 'SF Mono', monospace;
 }
-.card-body { padding: 20px; }
+.card-body { padding: 10px 20px 20px; }
 
 /* ── Dropzone ───────────────────────────────────────────────────────────── */
 .dropzone {
@@ -407,3 +407,51 @@ footer {
 
 /* ── Logo — original SVG colors, no filter ──────────────────────────────── */
 .jv-logo { display: block; }
+
+/* ── Mobile ─────────────────────────────────────────────────────────────── */
+@media (max-width: 768px) {
+  main { width: 92% !important; padding: 24px 0 16px !important; }
+
+  h1 { font-size: 36px; letter-spacing: -0.03em; }
+
+  /* Workspace: stack vertically */
+  .workspace-grid {
+    grid-template-columns: 1fr !important;
+  }
+
+  /* Dropzone */
+  .dropzone { padding: 40px 20px; }
+
+  /* Sticky tab bar wraps actions onto second row */
+  .results-actions {
+    flex-wrap: wrap;
+    gap: 6px;
+  }
+
+  /* Frames grid: smaller columns */
+  .frames-grid {
+    grid-template-columns: repeat(auto-fill, minmax(160px, 1fr)) !important;
+    gap: 10px !important;
+  }
+
+  /* Navbar text: hide name on very small screens */
+  .navbar-name { display: none; }
+
+  /* Buttons: touch-friendly */
+  .btn { min-height: 44px; }
+  .btn-block { min-height: 48px; }
+
+  /* Footer stacks */
+  footer {
+    flex-direction: column;
+    align-items: flex-start;
+    gap: 10px;
+  }
+}
+
+@media (max-width: 480px) {
+  main { width: 94% !important; }
+  h1 { font-size: 28px; }
+  .navbar { padding: 0 16px; }
+  .dropzone { padding: 32px 16px; }
+}

@@ -105,13 +105,13 @@ export default function Workspace({
       gridTemplateColumns: '1.5fr 1fr',
       gap: 16,
       marginBottom: 24,
-    }}>
+    }} className="workspace-grid">
 
       {/* ── Video card ── */}
       <div className="card">
         <div className="card-header">
           <span className="card-title" style={{ display: 'flex', alignItems: 'center', gap: 6 }}>
-            <Video size={13} style={{ opacity: 0.6 }} /> Source
+            <Video size={16} style={{ opacity: 0.6 }} /> Source
           </span>
           <span className="card-meta">{videoMode === 'ffmpeg' ? ffmpegMeta : videoMeta || '—'}</span>
         </div>
@@ -132,7 +132,7 @@ export default function Workspace({
       <div className="card" style={{ display: 'flex', flexDirection: 'column' }}>
         <div className="card-header">
           <span className="card-title" style={{ display: 'flex', alignItems: 'center', gap: 6 }}>
-            <Sliders size={13} style={{ opacity: 0.6 }} /> Parameters
+            <Sliders size={16} style={{ opacity: 0.6 }} /> Parameters
           </span>
           <span className="card-meta">{paramMetaLabel}</span>
         </div>

@@ -52,7 +52,8 @@
   --radius-sm:           4px;
   --radius-md:           6px;
   --radius-lg:           8px;
-  --radius-card:         10px;
+  --radius-card:         14px;
+  --radius-btn:          14px;
   --radius-xl:           12px;
   --radius-pill:         100px;
   --radius-full:         9999px;

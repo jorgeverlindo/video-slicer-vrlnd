@@ -26,7 +26,7 @@ export default function Navbar({ theme, onToggleTheme }: NavbarProps) {
           className="jv-logo"
           style={{ display: 'block', flexShrink: 0 }}
         />
-        <span style={{
+        <span className="navbar-name" style={{
           fontFamily: "'Macklin Text', 'Playfair Display', serif",
           fontSize: 20,
           fontWeight: 400,

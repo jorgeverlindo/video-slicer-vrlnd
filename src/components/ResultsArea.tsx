@@ -104,7 +104,7 @@ export default function ResultsArea({
                 active={activeTab === 'frames'}
                 onClick={() => setActiveTab('frames')}
               >
-                <FileImage size={13} />
+                <FileImage size={16} />
                 Frames
                 <span className="results-count-chip">{frames.length}</span>
               </TabBtn>
@@ -115,7 +115,7 @@ export default function ResultsArea({
                 active={activeTab === 'transcript'}
                 onClick={() => setActiveTab('transcript')}
               >
-                <Mic size={13} />
+                <Mic size={16} />
                 Transcription
                 {txLoading && (
                   <span style={{
@@ -132,7 +132,7 @@ export default function ResultsArea({
           </div>
 
           {/* Context actions */}
-          <div style={{ display: 'flex', alignItems: 'center', gap: 8, paddingBottom: 10 }}>
+          <div className="results-actions" style={{ display: 'flex', alignItems: 'center', gap: 8, paddingBottom: 10 }}>
             {activeTab === 'frames' && hasFrames && (
               <>
                 {txReady && (
@@ -192,7 +192,7 @@ export default function ResultsArea({
             <p style={{ fontSize: 12, color: 'var(--text-secondary)', marginBottom: 16 }}>
               {frames.length} frames · {totalMb} MB total · click a frame to download individually
             </p>
-            <div style={{
+            <div className="frames-grid" style={{
               display: 'grid',
               gridTemplateColumns: 'repeat(auto-fill, minmax(240px, 1fr))',
               gap: 16,
@@ -283,7 +283,9 @@ export default function ResultsArea({
               background: 'var(--gray-100)',
               borderRadius: 'var(--radius-lg)',
               padding: '20px 24px',
-              fontSize: 14, lineHeight: 1.8,
+              fontSize: 20, lineHeight: 1.3,
+              fontFamily: "'Macklin Sans', 'DM Sans', sans-serif",
+              fontWeight: 300,
               color: 'var(--text-primary)',
               maxHeight: 520,
               overflowY: 'auto',
