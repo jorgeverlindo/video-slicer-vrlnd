@@ -12,6 +12,16 @@ type Props = {
   downloadProgress?: number | null
 }
 
+const LANGUAGE_FLAGS: Record<string, string> = {
+  portuguese: '🇧🇷', english: '🇬🇧', spanish: '🇪🇸', french: '🇫🇷',
+  german: '🇩🇪', italian: '🇮🇹', japanese: '🇯🇵', chinese: '🇨🇳',
+  korean: '🇰🇷', russian: '🇷🇺', arabic: '🇸🇦', dutch: '🇳🇱',
+}
+
+function formatLanguage(lang: string) {
+  return lang.charAt(0).toUpperCase() + lang.slice(1)
+}
+
 export default function TranscriptPanel({ status, statusMsg, result, filename, downloadProgress }: Props) {
   const [copied, setCopied] = useState(false)
 
@@ -19,6 +29,7 @@ export default function TranscriptPanel({ status, statusMsg, result, filename, d
 
   const md = result ? transcriptToMarkdown(result, filename) : null
   const isLoading = status !== 'done' && status !== 'error'
+  const isDownloading = status === 'loading-model' || status === 'loading-model-multilingual'
 
   function copyText() {
     if (!result) return
@@ -40,8 +51,7 @@ export default function TranscriptPanel({ status, statusMsg, result, filename, d
       {/* ── Header ── */}
       <div style={{
         borderBottom: '1px solid var(--border)',
-        paddingBottom: 16,
-        marginBottom: 20,
+        paddingBottom: 16, marginBottom: 20,
         display: 'flex', justifyContent: 'space-between', alignItems: 'center',
         gap: 16, flexWrap: 'wrap',
       }}>
@@ -49,20 +59,32 @@ export default function TranscriptPanel({ status, statusMsg, result, filename, d
           <Mic size={15} style={{ color: 'var(--brand)', opacity: 0.8 }} />
           <h2 style={{ lineHeight: 1 }}>Transcription</h2>
 
-          {/* Cached badge */}
+          {/* Language badge — shown when done */}
+          {status === 'done' && result?.language && (
+            <span style={{
+              display: 'inline-flex', alignItems: 'center', gap: 5,
+              fontSize: 11, fontWeight: 500,
+              background: 'var(--brand-tint)', color: 'var(--brand)',
+              borderRadius: 99, padding: '2px 9px', border: '1px solid var(--brand-18)',
+            }}>
+              {LANGUAGE_FLAGS[result.language] ?? '🌐'} {formatLanguage(result.language)}
+            </span>
+          )}
+
+          {/* Model cached badge */}
           {status === 'model-cached' && (
             <span style={{
               display: 'inline-flex', alignItems: 'center', gap: 4,
               fontSize: 11, fontWeight: 500,
-              background: 'var(--success-bg, #ecfdf5)', color: 'var(--success, #16a34a)',
+              background: 'var(--success-bg, #ecfdf5)', color: 'var(--success-fg, #166534)',
               borderRadius: 99, padding: '2px 8px',
             }}>
               <Check size={10} /> Model cached
             </span>
           )}
 
-          {/* Spinner for phases other than downloading */}
-          {isLoading && status !== 'loading-model' && status !== 'model-cached' && (
+          {/* Spinner for non-download phases */}
+          {isLoading && !isDownloading && status !== 'model-cached' && (
             <span style={{ display: 'flex', alignItems: 'center', gap: 6, fontSize: 12, color: 'var(--text-secondary)' }}>
               <Loader2 size={12} style={{ animation: 'spin 1s linear infinite' }} />
               {statusMsg}
@@ -83,22 +105,19 @@ export default function TranscriptPanel({ status, statusMsg, result, filename, d
         )}
       </div>
 
-      {/* ── Download progress ── */}
-      {status === 'loading-model' && (
+      {/* ── Download progress (tiny or multilingual) ── */}
+      {isDownloading && (
         <div style={{
-          background: 'var(--gray-100)',
-          borderRadius: 'var(--radius-lg)',
-          padding: '20px 24px',
+          background: 'var(--gray-100)', borderRadius: 'var(--radius-lg)', padding: '20px 24px',
         }}>
           <div style={{
             display: 'flex', alignItems: 'center', gap: 8,
             marginBottom: 12, fontSize: 13, color: 'var(--text-primary)', fontWeight: 500,
           }}>
             <ArrowDownToLine size={14} style={{ color: 'var(--brand)' }} />
-            Downloading transcription model
+            <span style={{ flex: 1 }}>{statusMsg || 'Downloading model…'}</span>
             {downloadProgress != null && (
               <span style={{
-                marginLeft: 'auto',
                 fontVariantNumeric: 'tabular-nums',
                 fontFamily: 'JetBrains Mono, SF Mono, monospace',
                 fontSize: 12, color: 'var(--text-secondary)',
@@ -108,28 +127,24 @@ export default function TranscriptPanel({ status, statusMsg, result, filename, d
             )}
           </div>
 
-          {/* Progress bar */}
-          <div style={{
-            height: 4, background: 'var(--border)',
-            borderRadius: 99, overflow: 'hidden', marginBottom: 10,
-          }}>
+          <div style={{ height: 4, background: 'var(--border)', borderRadius: 99, overflow: 'hidden', marginBottom: 10 }}>
             <div style={{
-              height: '100%',
-              background: 'var(--brand)',
-              borderRadius: 99,
+              height: '100%', background: 'var(--brand)', borderRadius: 99,
               width: downloadProgress != null ? `${downloadProgress}%` : '0%',
               transition: 'width 0.3s ease',
             }} />
           </div>
 
           <div style={{ fontSize: 12, color: 'var(--text-secondary)' }}>
-            First time only — model is cached in your browser after this and loads instantly
+            {status === 'loading-model-multilingual'
+              ? 'Enhanced multilingual model (~460 MB) — cached after first download'
+              : 'First time only — model is cached in your browser after this'}
           </div>
         </div>
       )}
 
-      {/* ── Decoding / transcribing spinner ── */}
-      {isLoading && status !== 'loading-model' && status !== 'model-cached' && (
+      {/* ── Detecting / decoding / transcribing spinner ── */}
+      {isLoading && !isDownloading && status !== 'model-cached' && (
         <div style={{ padding: '32px 0', textAlign: 'center', color: 'var(--text-secondary)', fontSize: 13 }}>
           <Loader2 size={20} style={{ animation: 'spin 1s linear infinite', display: 'block', margin: '0 auto 8px' }} />
           {statusMsg}
@@ -140,8 +155,7 @@ export default function TranscriptPanel({ status, statusMsg, result, filename, d
       {status === 'error' && (
         <div style={{
           padding: '16px', fontSize: 13,
-          color: 'var(--text-secondary)',
-          background: 'var(--gray-100)',
+          color: 'var(--text-secondary)', background: 'var(--gray-100)',
           borderRadius: 'var(--radius-md)',
         }}>
           {statusMsg}
@@ -151,15 +165,9 @@ export default function TranscriptPanel({ status, statusMsg, result, filename, d
       {/* ── Result ── */}
       {result && (
         <div style={{
-          background: 'var(--gray-100)',
-          borderRadius: 'var(--radius-lg)',
-          padding: '20px 24px',
-          fontSize: 14,
-          lineHeight: 1.7,
-          color: 'var(--text-primary)',
-          maxHeight: 360,
-          overflowY: 'auto',
-          fontFamily: 'inherit',
+          background: 'var(--gray-100)', borderRadius: 'var(--radius-lg)',
+          padding: '20px 24px', fontSize: 14, lineHeight: 1.7,
+          color: 'var(--text-primary)', maxHeight: 360, overflowY: 'auto', fontFamily: 'inherit',
         }}>
           {(result.chunks ?? []).length > 0
             ? result.chunks.map((chunk, i) => (

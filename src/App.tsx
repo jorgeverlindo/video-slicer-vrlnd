@@ -95,7 +95,10 @@ export default function App() {
       // Start transcription in background (non-blocking)
       setTranscript({ status: 'loading-model', statusMsg: 'Downloading model…', result: null, downloadProgress: null })
       transcribeFile(file, (status, msg, progress) => {
-        setTranscript(prev => ({ ...prev, status, statusMsg: msg ?? '', downloadProgress: progress ?? null }))
+        setTranscript(prev => ({
+          ...prev, status, statusMsg: msg ?? '',
+          downloadProgress: (status === 'loading-model' || status === 'loading-model-multilingual') ? (progress ?? null) : null,
+        }))
       }).then(result => {
         setTranscript({ status: 'done', statusMsg: '', result, downloadProgress: null })
       }).catch(err => {
@@ -117,7 +120,10 @@ export default function App() {
         // Start transcription in background (non-blocking)
         setTranscript({ status: 'loading-model', statusMsg: 'Downloading model…', result: null, downloadProgress: null })
         transcribeFile(file, (status, msg, progress) => {
-          setTranscript(prev => ({ ...prev, status, statusMsg: msg ?? '', downloadProgress: progress ?? null }))
+          setTranscript(prev => ({
+          ...prev, status, statusMsg: msg ?? '',
+          downloadProgress: (status === 'loading-model' || status === 'loading-model-multilingual') ? (progress ?? null) : null,
+        }))
         }, ffmpegInstanceRef.current, ffmpegInputRef.current).then(result => {
           setTranscript({ status: 'done', statusMsg: '', result, downloadProgress: null })
         }).catch(err => {
