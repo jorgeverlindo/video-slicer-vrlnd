@@ -141,16 +141,16 @@ export function transcriptToMarkdown(result: TranscriptResult, filename: string)
   const lines = [
     `# Transcript — ${filename}`, '',
     langLine,
-    '## Full text', '',
-    result.text.trim(), '',
-    '---', '',
-    '## Segments', '',
   ]
   for (const chunk of result.chunks ?? []) {
     const [s, e] = chunk.timestamp
     lines.push(`**${fmtTime(s)} → ${fmtTime(e)}**  `)
     lines.push(chunk.text.trim())
     lines.push('')
+  }
+  // Fallback: no chunks, just plain text
+  if ((result.chunks ?? []).length === 0) {
+    lines.push(result.text.trim())
   }
   return lines.join('\n')
 }

@@ -58,7 +58,12 @@ export default function ResultsArea({
 
   async function copyTranscript() {
     if (!transcriptResult) return
-    const text = transcriptResult.text
+    // Copy segments with timecodes; fall back to plain text if no chunks
+    const text = (transcriptResult.chunks ?? []).length > 0
+      ? transcriptResult.chunks
+          .map(c => `${fmtT(c.timestamp[0])}  ${c.text.trim()}`)
+          .join('\n')
+      : transcriptResult.text
     try {
       await navigator.clipboard.writeText(text)
     } catch {
