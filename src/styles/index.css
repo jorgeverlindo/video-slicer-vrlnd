@@ -422,6 +422,13 @@ footer {
   /* Dropzone */
   .dropzone { padding: 40px 20px; }
 
+  /* Results section: fill available width on mobile */
+  .results-section {
+    max-width: 100% !important;
+    margin-left: 0 !important;
+    margin-right: 0 !important;
+  }
+
   /* Sticky tab bar wraps actions onto second row */
   .results-actions {
     flex-wrap: wrap;

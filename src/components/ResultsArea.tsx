@@ -85,7 +85,7 @@ export default function ResultsArea({
   // ─────────────────────────────────────────────────────────────────────────────
 
   return (
-    <section style={{ marginTop: 32 }}>
+    <section className="results-section" style={{ maxWidth: 800, margin: '32px auto 0' }}>
 
       {/* ── Sticky tab bar ───────────────────────────────────────────────── */}
       <div style={{
@@ -281,8 +281,8 @@ export default function ResultsArea({
           {transcriptResult && (
             <div style={{ display: 'flex', gap: 24, alignItems: 'flex-start' }}>
 
-              {/* Transcript body — optimal reading column (65ch ≈ 65 characters) */}
-              <div style={{ flex: 1, maxWidth: '65ch' }}>
+              {/* Transcript body — 800px column (fills the centered section) */}
+              <div style={{ flex: 1 }}>
                 {(transcriptResult.chunks ?? []).length > 0
                   ? transcriptResult.chunks.map((chunk, i) => (
                       <div key={i} style={{
