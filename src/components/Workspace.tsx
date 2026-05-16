@@ -298,8 +298,8 @@ export default function Workspace({
 
               return (
                 <div>
-                  {/* Row: dropdown + ~460 MB hint */}
-                  <div style={{ display: 'flex', alignItems: 'center', gap: 10 }}>
+                  {/* Row: dropdown + status/hint */}
+                  <div style={{ display: 'flex', alignItems: 'center', gap: 10, minWidth: 0, overflow: 'hidden' }}>
                     <div style={{ position: 'relative', flexShrink: 0 }}>
                       <select
                         value={transcriptLang ?? ''}
@@ -324,36 +324,34 @@ export default function Workspace({
                       }} />
                     </div>
 
+                    {/* Inline spinner + message */}
+                    {isActive && (
+                      <div style={{ display: 'flex', alignItems: 'center', gap: 8, minWidth: 0, overflow: 'hidden' }}>
+                        <div style={{
+                          flexShrink: 0,
+                          width: 14, height: 14, borderRadius: '50%',
+                          border: '1.5px solid var(--border)',
+                          borderTopColor: 'var(--brand)',
+                          animation: 'spin 0.75s linear infinite',
+                        }} />
+                        <span style={{
+                          fontSize: 14, fontWeight: 300,
+                          fontFamily: "'Macklin Sans', 'DM Sans', sans-serif",
+                          color: 'var(--text-secondary)',
+                          whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis',
+                        }}>
+                          {statusText}
+                        </span>
+                      </div>
+                    )}
+
+                    {/* ~460 MB hint */}
                     {!isActive && transcriptLang && transcriptLang !== 'en' && transcriptStatus === 'idle' && (
-                      <span style={{ fontSize: 10, color: 'var(--text-secondary)', opacity: 0.7 }}>
+                      <span style={{ fontSize: 10, color: 'var(--text-secondary)', opacity: 0.7, flexShrink: 0 }}>
                         ~460 MB
                       </span>
                     )}
                   </div>
-
-                  {/* Status row — Body 1, shown while transcription is running */}
-                  {isActive && (
-                    <div style={{
-                      display: 'flex', alignItems: 'center', gap: 10,
-                      marginTop: 14,
-                    }}>
-                      {/* Custom circular spinner */}
-                      <div style={{
-                        flexShrink: 0,
-                        width: 18, height: 18, borderRadius: '50%',
-                        border: '1.5px solid var(--border)',
-                        borderTopColor: 'var(--brand)',
-                        animation: 'spin 0.75s linear infinite',
-                      }} />
-                      <span style={{
-                        fontSize: 20, lineHeight: 1.3,
-                        fontFamily: "'Macklin Sans', 'DM Sans', sans-serif",
-                        fontWeight: 300, color: 'var(--text-primary)',
-                      }}>
-                        {statusText}
-                      </span>
-                    </div>
-                  )}
                 </div>
               )
             })()}
