@@ -7,10 +7,12 @@ import { frameFilename, packAsZip, triggerDownload } from '../lib/zip'
 type Props = {
   frames: Frame[]
   onClear: () => void
+  transcriptMd?: string | null
 }
 
-export default function FrameGrid({ frames, onClear }: Props) {
+export default function FrameGrid({ frames, onClear, transcriptMd }: Props) {
   const [packing, setPacking] = useState(false)
+  const [includeTranscript, setIncludeTranscript] = useState(false)
 
   if (frames.length === 0) return null
 
@@ -19,7 +21,7 @@ export default function FrameGrid({ frames, onClear }: Props) {
   async function downloadAll() {
     if (packing) return
     setPacking(true)
-    const zip = await packAsZip(frames)
+    const zip = await packAsZip(frames, includeTranscript && transcriptMd ? transcriptMd : undefined)
     const stamp = new Date().toISOString().replace(/[:.]/g, '-').slice(0, 19)
     triggerDownload(zip, `frames_${stamp}.zip`)
     setPacking(false)
@@ -53,7 +55,18 @@ export default function FrameGrid({ frames, onClear }: Props) {
             {frames.length} frames · {totalMb} MB total · click a frame to download individually
           </div>
         </div>
-        <div style={{ display: 'flex', gap: 8 }}>
+        <div style={{ display: 'flex', gap: 8, alignItems: 'center' }}>
+          {transcriptMd && (
+            <label style={{ display: 'flex', alignItems: 'center', gap: 6, fontSize: 12, color: 'var(--text-secondary)', cursor: 'pointer', userSelect: 'none' }}>
+              <input
+                type="checkbox"
+                checked={includeTranscript}
+                onChange={e => setIncludeTranscript(e.target.checked)}
+                style={{ accentColor: 'var(--brand)', width: 13, height: 13 }}
+              />
+              Include transcript in ZIP
+            </label>
+          )}
           <button className="btn btn-secondary" onClick={onClear}>
             <X size={16} /> Clear
           </button>

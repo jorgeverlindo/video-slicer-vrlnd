@@ -7,10 +7,13 @@ export function frameFilename(frame: Frame): string {
   return `frame_${String(frame.index).padStart(3, '0')}_${tc}.jpg`
 }
 
-export async function packAsZip(frames: Frame[]): Promise<Blob> {
+export async function packAsZip(frames: Frame[], transcriptMd?: string): Promise<Blob> {
   const zip = new JSZip()
   for (const frame of frames) {
     zip.file(frameFilename(frame), frame.blob)
+  }
+  if (transcriptMd) {
+    zip.file('transcript.md', transcriptMd)
   }
   return zip.generateAsync({ type: 'blob', compression: 'STORE' })
 }

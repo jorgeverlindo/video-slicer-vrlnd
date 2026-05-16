@@ -354,6 +354,17 @@ video {
   overflow-x: auto; margin: 8px 0; line-height: 1.5;
 }
 
+/* ── Animations ─────────────────────────────────────────────────────────── */
+@keyframes spin {
+  from { transform: rotate(0deg); }
+  to { transform: rotate(360deg); }
+}
+
+@keyframes pulse {
+  0%, 100% { opacity: 1; transform: scale(1); }
+  50%       { opacity: 0.4; transform: scale(0.85); }
+}
+
 /* ── Footer ─────────────────────────────────────────────────────────────── */
 footer {
   max-width: 1200px; margin: 64px auto 0; padding: 24px 24px 40px;

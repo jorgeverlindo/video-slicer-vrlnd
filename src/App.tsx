@@ -3,12 +3,14 @@ import { AlertCircle, Info } from 'lucide-react'
 import Navbar from './components/Navbar'
 import Dropzone from './components/Dropzone'
 import Workspace from './components/Workspace'
-import FrameGrid from './components/FrameGrid'
+import ResultsArea from './components/ResultsArea'
 import type { Frame, ExtractionParams } from './lib/extractor'
 import {
   buildTimestamps, extractNative, extractFFmpeg,
   loadFFmpeg, probeWithFFmpeg,
 } from './lib/extractor'
+import type { TranscriptStatus, TranscriptResult } from './lib/transcriber'
+import { transcribeFile } from './lib/transcriber'
 
 export type MarkedFrame = {
   id: number
@@ -56,6 +58,12 @@ export default function App() {
     error: null, status: null, showFallbackHelp: false,
   })
   const [params, setParams] = useState<ExtractionParams>(DEFAULT_PARAMS)
+  const [transcript, setTranscript] = useState<{
+    status: TranscriptStatus
+    statusMsg: string
+    result: TranscriptResult | null
+    downloadProgress: number | null
+  }>({ status: 'idle', statusMsg: '', result: null, downloadProgress: null })
 
   const patch = (partial: Partial<AppState>) => setState((s) => ({ ...s, ...partial }))
 
@@ -63,6 +71,7 @@ export default function App() {
 
   const handleFile = useCallback(async (file: File) => {
     patch({ file, frames: [], markedFrames: [], error: null, status: null, showFallbackHelp: false, duration: 0 })
+    setTranscript({ status: 'idle', statusMsg: '', result: null, downloadProgress: null })
 
     const probe = document.createElement('video')
     probe.preload = 'metadata'
@@ -81,6 +90,15 @@ export default function App() {
       settled = true
       cleanup()
       patch({ duration: probe.duration, videoMode: 'native', status: null })
+      // Start transcription in background (non-blocking)
+      setTranscript({ status: 'loading-model', statusMsg: 'Downloading model…', result: null, downloadProgress: null })
+      transcribeFile(file, (status, msg, progress) => {
+        setTranscript(prev => ({ ...prev, status, statusMsg: msg ?? '', downloadProgress: progress ?? null }))
+      }).then(result => {
+        setTranscript({ status: 'done', statusMsg: '', result, downloadProgress: null })
+      }).catch(err => {
+        setTranscript({ status: 'error', statusMsg: String(err instanceof Error ? err.message : err), result: null, downloadProgress: null })
+      })
     }
 
     const onError = async () => {
@@ -94,6 +112,15 @@ export default function App() {
         const { duration, inputName } = await probeWithFFmpeg(ff, file, (msg) => patch({ status: msg }))
         ffmpegInputRef.current = inputName
         patch({ duration, videoMode: 'ffmpeg', status: null })
+        // Start transcription in background (non-blocking)
+        setTranscript({ status: 'loading-model', statusMsg: 'Downloading model…', result: null, downloadProgress: null })
+        transcribeFile(file, (status, msg, progress) => {
+          setTranscript(prev => ({ ...prev, status, statusMsg: msg ?? '', downloadProgress: progress ?? null }))
+        }, ffmpegInstanceRef.current, ffmpegInputRef.current).then(result => {
+          setTranscript({ status: 'done', statusMsg: '', result, downloadProgress: null })
+        }).catch(err => {
+          setTranscript({ status: 'error', statusMsg: String(err instanceof Error ? err.message : err), result: null, downloadProgress: null })
+        })
       } catch (e: unknown) {
         const msg = e instanceof Error ? e.message : String(e)
         patch({ status: null, error: msg, showFallbackHelp: true })
@@ -240,6 +267,7 @@ export default function App() {
                 frames: [], markedFrames: [], extracting: false, progress: null,
                 error: null, status: null, showFallbackHelp: false,
               })
+              setTranscript({ status: 'idle', statusMsg: '', result: null })
               if (videoRef.current) videoRef.current.src = ''
             }}>
               Try another file
@@ -265,8 +293,16 @@ export default function App() {
           />
         )}
 
-        {/* Frame results */}
-        <FrameGrid frames={state.frames} onClear={handleClear} />
+        {/* Frames + Transcript — tabbed */}
+        <ResultsArea
+          frames={state.frames}
+          onClear={handleClear}
+          transcriptStatus={transcript.status}
+          transcriptMsg={transcript.statusMsg}
+          transcriptResult={transcript.result}
+          transcriptProgress={transcript.downloadProgress}
+          filename={state.file?.name ?? ''}
+        />
 
       </main>
 
