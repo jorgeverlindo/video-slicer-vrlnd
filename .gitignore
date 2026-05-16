@@ -2,3 +2,8 @@ node_modules
 dist
 .DS_Store
 *.local
+.vercel
+
+# Commercial font files — do not distribute publicly
+public/fonts/*.otf
+public/fonts/*.ttf
