@@ -3,7 +3,7 @@ import { Sliders, Video, MapPin, X, ChevronDown } from 'lucide-react'
 import type { ExtractionParams } from '../lib/extractor'
 import { fmtDuration, fmtTimecode } from '../lib/extractor'
 import type { MarkedFrame } from '../App'
-import type { TranscriptLang, TranscriptStatus } from '../lib/transcriber'
+import type { TranscriptLang, TranscriptStatus } from '../lib/transcript-types'
 
 type VideoMode = 'native' | 'ffmpeg'
 

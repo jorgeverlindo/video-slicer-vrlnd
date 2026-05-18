@@ -1,3 +1,5 @@
+@import './tokens.css';
+
 /* ── Macklin Typeface ───────────────────────────────────────────────────── */
 /* Macklin Text — serif, used for headings                                  */
 @font-face {
@@ -30,10 +32,6 @@
   font-style: italic;
   font-display: swap;
 }
-
-@import 'tailwindcss' source(none);
-@source '../**/*.{ts,tsx}';
-@import './tokens.css';
 
 /* ── Base ───────────────────────────────────────────────────────────────── */
 *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }

@@ -10,8 +10,7 @@ import {
   buildTimestamps, extractNative, extractFFmpeg,
   loadFFmpeg, probeWithFFmpeg,
 } from './lib/extractor'
-import type { TranscriptStatus, TranscriptResult, TranscriptLang } from './lib/transcriber'
-import { transcribeFile } from './lib/transcriber'
+import type { TranscriptStatus, TranscriptResult, TranscriptLang } from './lib/transcript-types'
 
 export type MarkedFrame = {
   id: number
@@ -69,13 +68,15 @@ export default function App() {
 
   const runTranscription = useCallback((file: File, lang: TranscriptLang, ffmpegInst?: import('@ffmpeg/ffmpeg').FFmpeg | null, ffmpegName?: string | null) => {
     setTranscript({ status: 'loading-model', statusMsg: 'Loading model…', result: null, downloadProgress: null })
-    transcribeFile(
-      file,
-      (status, msg, progress) => setTranscript(prev => ({
-        ...prev, status, statusMsg: msg ?? '',
-        downloadProgress: (status === 'loading-model' || status === 'loading-model-multilingual') ? (progress ?? null) : null,
-      })),
-      ffmpegInst, ffmpegName, lang,
+    import('./lib/transcriber').then(({ transcribeFile }) =>
+      transcribeFile(
+        file,
+        (status, msg, progress) => setTranscript(prev => ({
+          ...prev, status, statusMsg: msg ?? '',
+          downloadProgress: (status === 'loading-model' || status === 'loading-model-multilingual') ? (progress ?? null) : null,
+        })),
+        ffmpegInst, ffmpegName, lang,
+      )
     ).then(result => {
       setTranscript({ status: 'done', statusMsg: '', result, downloadProgress: null })
     }).catch(err => {
@@ -120,7 +121,6 @@ export default function App() {
       URL.revokeObjectURL(url)
     }
 
-    // Read transcriptEnabled from a ref so the callback always sees fresh value
     const onReady = () => {
       if (settled || !probe.videoWidth) return
       settled = true
@@ -317,17 +317,7 @@ export default function App() {
               </p>
               <code>ffmpeg -i your_video.mov -c:v libx264 -crf 23 output.mp4</code>
             </div>
-            <button className="btn btn-secondary" style={{ marginTop: 16 }} onClick={() => {
-              state.frames.forEach((f) => URL.revokeObjectURL(f.url))
-              setState({
-                file: null, duration: 0, videoMode: 'native',
-                frames: [], markedFrames: [], extracting: false, progress: null,
-                error: null, status: null, showFallbackHelp: false,
-              })
-              setTranscript({ status: 'idle', statusMsg: '', result: null, downloadProgress: null })
-              setTranscriptEnabled(false)
-              if (videoRef.current) videoRef.current.src = ''
-            }}>
+            <button className="btn btn-secondary" style={{ marginTop: 16 }} onClick={handleClearVideo}>
               Try another file
             </button>
           </div>

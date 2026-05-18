@@ -20,7 +20,15 @@ function seekTo(video: HTMLVideoElement, time: number): Promise<void> {
       reject(new Error('Video not ready. Make sure the video is fully loaded before extracting.'))
       return
     }
-    const onSeeked = () => { video.removeEventListener('seeked', onSeeked); resolve() }
+    const timer = setTimeout(() => {
+      video.removeEventListener('seeked', onSeeked)
+      reject(new Error(`Seek to ${time.toFixed(2)}s timed out — try a different video format.`))
+    }, 10_000)
+    const onSeeked = () => {
+      clearTimeout(timer)
+      video.removeEventListener('seeked', onSeeked)
+      resolve()
+    }
     video.addEventListener('seeked', onSeeked)
     video.currentTime = Math.min(Math.max(0, time), video.duration - 0.01)
   })
@@ -73,7 +81,6 @@ export async function* extractNative(
 // ── FFmpeg path ──────────────────────────────────────────────────────────────
 
 let ffmpegInstance: import('@ffmpeg/ffmpeg').FFmpeg | null = null
-let ffmpegInputName: string | null = null
 
 export async function loadFFmpeg(
   onProgress?: (msg: string) => void
@@ -110,7 +117,6 @@ export async function probeWithFFmpeg(
 
   const ext = (file.name.match(/\.[^.]+$/) || ['.mp4'])[0]
   const inputName = 'input' + ext
-  ffmpegInputName = inputName
   await ff.writeFile(inputName, await fetchFile(file))
 
   let duration = 0
