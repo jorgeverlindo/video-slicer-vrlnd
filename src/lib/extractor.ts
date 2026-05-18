@@ -70,9 +70,11 @@ export async function* extractNative(
 
   for (let i = 0; i < timestamps.length; i++) {
     await seekTo(video, timestamps[i])
-    // Small delay to ensure frame is painted after seek
-    await new Promise((r) => setTimeout(r, 40))
-    ctx.drawImage(video, 0, 0, canvas.width, canvas.height)
+    // createImageBitmap is async — captures the decoded frame without blocking
+    // the main thread on a GPU pipeline sync (which ctx.drawImage does synchronously).
+    const bitmap = await createImageBitmap(video)
+    ctx.drawImage(bitmap, 0, 0, canvas.width, canvas.height)
+    bitmap.close()
     const blob = await canvasToBlob(canvas, quality)
     yield { index: i + 1, timestamp: timestamps[i], blob, url: URL.createObjectURL(blob) }
   }
