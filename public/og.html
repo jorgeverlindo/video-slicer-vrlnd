@@ -1,0 +1,128 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=1200" />
+  <title>Video Slicer — OG Banner</title>
+  <style>
+    @font-face {
+      font-family: 'Macklin Text';
+      src: url('/fonts/MacklinText-Regular.otf') format('opentype');
+      font-weight: 400;
+      font-style: normal;
+    }
+    @font-face {
+      font-family: 'Macklin Text';
+      src: url('/fonts/MacklinText-Light.otf') format('opentype');
+      font-weight: 300;
+      font-style: normal;
+    }
+    @font-face {
+      font-family: 'Macklin Sans';
+      src: url('/fonts/MacklinSans-Variable.ttf') format('truetype');
+      font-weight: 100 900;
+      font-style: normal;
+    }
+
+    *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
+    html, body {
+      width: 1200px;
+      height: 630px;
+      overflow: hidden;
+    }
+
+    .banner {
+      position: relative;
+      width: 1200px;
+      height: 630px;
+      background: #0d1117;
+      overflow: hidden;
+    }
+
+    /* Background illustration */
+    .bg {
+      position: absolute;
+      inset: 0;
+      background-image: url('/og-bg.jpg');
+      background-size: cover;
+      background-position: center right;
+    }
+
+    /* Left fade overlay so text reads clean */
+    .overlay {
+      position: absolute;
+      inset: 0;
+      background: linear-gradient(
+        to right,
+        #0b0f17 0%,
+        #0b0f17 38%,
+        rgba(11, 15, 23, 0.82) 55%,
+        rgba(11, 15, 23, 0.1) 75%,
+        transparent 100%
+      );
+    }
+
+    /* Content */
+    .content {
+      position: absolute;
+      inset: 0;
+      display: flex;
+      flex-direction: column;
+      justify-content: center;
+      padding: 0 72px;
+      max-width: 620px;
+    }
+
+    .eyebrow {
+      font-family: 'Macklin Sans', sans-serif;
+      font-size: 13px;
+      font-weight: 400;
+      letter-spacing: 0.12em;
+      text-transform: uppercase;
+      color: #c4882a;
+      margin-bottom: 24px;
+    }
+
+    .title {
+      font-family: 'Macklin Text', serif;
+      font-size: 88px;
+      font-weight: 400;
+      line-height: 0.95;
+      letter-spacing: -0.03em;
+      color: #f2ede6;
+      margin-bottom: 28px;
+    }
+
+    .subtitle {
+      font-family: 'Macklin Text', serif;
+      font-size: 22px;
+      font-weight: 300;
+      line-height: 1.45;
+      color: rgba(242, 237, 230, 0.62);
+      margin-bottom: 48px;
+      max-width: 420px;
+    }
+
+    .url {
+      font-family: 'Macklin Sans', sans-serif;
+      font-size: 13px;
+      font-weight: 300;
+      letter-spacing: 0.04em;
+      color: rgba(196, 136, 42, 0.75);
+    }
+  </style>
+</head>
+<body>
+  <div class="banner">
+    <div class="bg"></div>
+    <div class="overlay"></div>
+    <div class="content">
+      <div class="eyebrow">A tool by Jorge Verlindo</div>
+      <h1 class="title">Video<br>Slicer</h1>
+      <p class="subtitle">Extract frames from any video, right in your browser.</p>
+      <span class="url">videoslicer.jorgeverlindo.design</span>
+    </div>
+  </div>
+</body>
+</html>
