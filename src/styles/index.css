@@ -462,3 +462,215 @@ footer {
   .navbar { padding: 0 16px; }
   .dropzone { padding: 32px 16px; }
 }
+
+/* ── Storyboard document preview ────────────────────────────────────────── */
+/* Paper-white always — it previews the exported PDF, independent of theme */
+.sb-doc {
+  background: #fff;
+  border: 1px solid var(--border);
+  border-radius: var(--radius-md);
+  padding: 24px 28px 20px;
+  box-shadow: 0 2px 12px rgba(0, 0, 0, 0.06);
+}
+
+.sb-doc-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: baseline;
+  padding-bottom: 10px;
+  margin-bottom: 18px;
+  border-bottom: 1px solid #e4e0da;
+}
+.sb-doc-title {
+  font-family: 'Macklin Text', 'Playfair Display', serif;
+  font-size: 18px;
+  color: #1e1e1e;
+  letter-spacing: -0.02em;
+}
+.sb-doc-meta {
+  font-size: 11px;
+  color: #999;
+  font-family: 'JetBrains Mono', 'SF Mono', monospace;
+}
+
+.sb-grid {
+  display: grid;
+  grid-template-columns: repeat(3, 1fr);
+  gap: 18px 16px;
+}
+
+.vsthumb {
+  display: flex;
+  flex-direction: column;
+  min-width: 0;
+}
+.vsthumb-head {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  margin-bottom: 6px;
+}
+.vsthumb-badge {
+  width: 18px;
+  height: 18px;
+  border-radius: 50%;
+  background: #1e1e1e;
+  color: #fff;
+  font-size: 10px;
+  font-weight: 600;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  flex-shrink: 0;
+}
+.vsthumb-time {
+  font-size: 10px;
+  color: #999;
+  font-family: 'JetBrains Mono', 'SF Mono', monospace;
+  font-variant-numeric: tabular-nums;
+}
+.vsthumb-img {
+  width: 100%;
+  aspect-ratio: var(--sb-img-ratio, 16/9);
+  object-fit: cover;
+  display: block;
+  border-radius: 3px;
+  background: #000;
+}
+.vsthumb-tx {
+  margin-top: 8px;
+  width: 100%;
+  border: none;
+  background: transparent;
+  resize: none;
+  font-family: 'Macklin Sans', 'DM Sans', sans-serif;
+  font-size: 12px;
+  font-weight: 300;
+  line-height: 1.45;
+  color: #3c3c3c;
+  outline: none;
+  padding: 0;
+}
+.vsthumb-tx::placeholder { color: #c0bcb6; }
+.vsthumb-desc {
+  margin-top: 4px;
+  width: 100%;
+  border: none;
+  background: transparent;
+  font-family: 'Macklin Sans', 'DM Sans', sans-serif;
+  font-size: 11px;
+  font-weight: 300;
+  font-style: italic;
+  color: #969289;
+  outline: none;
+  padding: 0;
+}
+.vsthumb-desc::placeholder { color: #d4d0ca; }
+
+.sb-doc-footer {
+  margin-top: 20px;
+  padding-top: 10px;
+  border-top: 1px solid #e4e0da;
+}
+.sb-footnote-text {
+  font-size: 11px;
+  color: #969289;
+  margin: 0;
+  line-height: 1.5;
+}
+
+.sb-footnote-input {
+  flex: 1;
+  min-width: 0;
+  height: 36px;
+  padding: 0 12px;
+  font-family: 'Macklin Sans', 'DM Sans', sans-serif;
+  font-size: 13px;
+  font-weight: 300;
+  background: var(--gray-100);
+  color: var(--text-primary);
+  border: 1px solid var(--border);
+  border-radius: var(--radius-md);
+  outline: none;
+}
+.sb-footnote-input::placeholder { color: var(--text-placeholder); }
+.sb-footnote-input:focus { border-color: var(--brand); }
+
+/* ── URL input (Dropzone) ─────────────────────────────────────────────────── */
+
+.url-input-wrap {
+  margin-top: 16px;
+}
+
+.url-input-divider {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  font-size: 11px;
+  color: var(--text-placeholder);
+  margin-bottom: 10px;
+}
+.url-input-divider::before,
+.url-input-divider::after {
+  content: '';
+  flex: 1;
+  height: 1px;
+  background: var(--border);
+}
+
+.url-input-form {
+  display: flex;
+  gap: 8px;
+  align-items: center;
+}
+
+.url-input-field-wrap {
+  flex: 1;
+  position: relative;
+  display: flex;
+  align-items: center;
+}
+
+.url-input-icon {
+  position: absolute;
+  left: 10px;
+  color: var(--text-placeholder);
+  pointer-events: none;
+  flex-shrink: 0;
+}
+
+.url-input-field {
+  width: 100%;
+  height: 36px;
+  padding: 0 12px 0 32px;
+  font-size: 13px;
+  font-family: inherit;
+  background: var(--gray-100);
+  border: 1px solid var(--border);
+  border-radius: var(--radius-md);
+  color: var(--text-primary);
+  outline: none;
+  transition: border-color 0.15s;
+}
+.url-input-field::placeholder { color: var(--text-placeholder); }
+.url-input-field:focus { border-color: var(--brand); }
+.url-input-field:disabled { opacity: 0.6; cursor: not-allowed; }
+
+.url-input-error {
+  display: flex;
+  gap: 6px;
+  align-items: flex-start;
+  margin-top: 8px;
+  padding: 8px 12px;
+  font-size: 12px;
+  color: var(--destructive);
+  background: var(--destructive-bg);
+  border-radius: var(--radius-md);
+}
+
+/* ── Compact seg — 4-option controls where 14px labels would wrap ────────── */
+.seg-compact label {
+  font-size: 12px;
+  white-space: nowrap;
+  padding: 7px 4px;
+}

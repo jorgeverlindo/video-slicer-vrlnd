@@ -5,10 +5,10 @@ import { useTheme } from './components/ThemeToggle'
 import Dropzone from './components/Dropzone'
 import Workspace from './components/Workspace'
 import ResultsArea from './components/ResultsArea'
-import type { Frame, ExtractionParams } from './lib/extractor'
+import type { Frame, ExtractionParams, AspectRatio } from './lib/extractor'
 import {
   buildTimestamps, extractNative, extractFFmpeg,
-  loadFFmpeg, probeWithFFmpeg,
+  loadFFmpeg, probeWithFFmpeg, ASPECT_RATIO_H,
 } from './lib/extractor'
 import type { TranscriptStatus, TranscriptResult, TranscriptLang } from './lib/transcript-types'
 
@@ -33,6 +33,15 @@ type AppState = {
   showFallbackHelp: boolean
 }
 
+function detectAspectRatio(w: number, h: number): AspectRatio {
+  if (!w || !h) return '16:9'
+  const ratio = w / h
+  const options = Object.entries(ASPECT_RATIO_H) as [AspectRatio, number][]
+  return options.reduce((best, [key, hRatio]) =>
+    Math.abs(ratio - 1 / hRatio) < Math.abs(ratio - 1 / ASPECT_RATIO_H[best]) ? key : best
+  , '16:9' as AspectRatio)
+}
+
 const DEFAULT_PARAMS: ExtractionParams = {
   mode: 'interval',
   interval: 1,
@@ -53,6 +62,7 @@ export default function App() {
     error: null, status: null, showFallbackHelp: false,
   })
   const [params, setParams] = useState<ExtractionParams>(DEFAULT_PARAMS)
+  const [aspectRatio, setAspectRatio] = useState<AspectRatio>('16:9')
   const [transcriptEnabled, setTranscriptEnabled] = useState(false)
   const [transcriptLang, setTranscriptLang] = useState<TranscriptLang | null>(null)
   const [transcript, setTranscript] = useState<{
@@ -126,6 +136,7 @@ export default function App() {
       settled = true
       cleanup()
       patch({ duration: probe.duration, videoMode: 'native', status: null })
+      setAspectRatio(detectAspectRatio(probe.videoWidth, probe.videoHeight))
       // transcription triggered only if user opted in
     }
 
@@ -170,9 +181,14 @@ export default function App() {
   const handleExtract = useCallback(async () => {
     if (state.extracting || !state.file || !state.duration) return
 
-    const timestamps = params.mode === 'custom'
-      ? state.markedFrames.map((m) => m.timestamp)
-      : buildTimestamps(state.duration, params)
+    const timestamps =
+      params.mode === 'storyboard'
+        ? transcript.result?.chunks?.length
+          ? transcript.result.chunks.map((c) => c.timestamp[0])
+          : state.markedFrames.map((m) => m.timestamp)
+        : params.mode === 'custom'
+        ? state.markedFrames.map((m) => m.timestamp)
+        : buildTimestamps(state.duration, params)
 
     if (timestamps.length === 0) return
 
@@ -198,7 +214,7 @@ export default function App() {
     } finally {
       patch({ extracting: false, progress: null })
     }
-  }, [state, params])
+  }, [state, params, transcript])
 
   const handleClear = useCallback(() => {
     state.frames.forEach((f) => URL.revokeObjectURL(f.url))
@@ -227,7 +243,7 @@ export default function App() {
     <>
       <Navbar theme={theme} onToggleTheme={toggleTheme} />
 
-      <main style={{ width: '80%', margin: '0 auto', padding: '40px 0 24px' }}>
+      <main style={{ width: 'min(1200px, 92%)', margin: '0 auto', padding: '40px 0 24px' }}>
 
         {/* Hero */}
         <header style={{ marginBottom: 48 }}>
@@ -256,7 +272,6 @@ export default function App() {
             fontFamily: "'Macklin Sans', 'DM Sans', sans-serif",
             color: 'var(--text-secondary)', fontSize: 18,
             fontWeight: 300, marginTop: 16, lineHeight: 1.5,
-            maxWidth: 560,
           }}>
             Extract frames from any video, locally in your browser.
             No upload, no server — the file never leaves your machine.
@@ -332,6 +347,8 @@ export default function App() {
             videoRef={videoRef as React.RefObject<HTMLVideoElement>}
             params={params}
             onParamsChange={setParams}
+            aspectRatio={aspectRatio}
+            onAspectRatioChange={setAspectRatio}
             extracting={state.extracting}
             progress={state.progress}
             onExtract={handleExtract}
@@ -353,6 +370,8 @@ export default function App() {
         <ResultsArea
           frames={state.frames}
           onClear={handleClear}
+          mode={params.mode}
+          aspectRatio={aspectRatio}
           transcriptStatus={transcript.status}
           transcriptMsg={transcript.statusMsg}
           transcriptResult={transcript.result}

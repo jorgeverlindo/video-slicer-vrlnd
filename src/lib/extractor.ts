@@ -6,10 +6,20 @@ export type Frame = {
 }
 
 export type ExtractionParams = {
-  mode: 'interval' | 'count' | 'custom'
+  mode: 'interval' | 'count' | 'custom' | 'storyboard'
   interval: number
   count: number
   quality: number
+}
+
+export type AspectRatio = '16:9' | '1:1' | '4:5' | '9:16'
+
+// Height as a fraction of width, per ratio — drives thumbnail + PDF layout
+export const ASPECT_RATIO_H: Record<AspectRatio, number> = {
+  '16:9': 9 / 16,
+  '1:1': 1,
+  '4:5': 5 / 4,
+  '9:16': 16 / 9,
 }
 
 export type ExtractionMode = 'native' | 'ffmpeg'

@@ -1,6 +1,6 @@
-import { useEffect, useState } from 'react'
-import { Sliders, Video, MapPin, X, ChevronDown } from 'lucide-react'
-import type { ExtractionParams } from '../lib/extractor'
+import { useCallback, useEffect, useRef, useState } from 'react'
+import { Sliders, Video, MapPin, X, ChevronDown, Check } from 'lucide-react'
+import type { ExtractionParams, AspectRatio } from '../lib/extractor'
 import { fmtDuration, fmtTimecode } from '../lib/extractor'
 import type { MarkedFrame } from '../App'
 import type { TranscriptLang, TranscriptStatus } from '../lib/transcript-types'
@@ -14,6 +14,8 @@ type Props = {
   videoRef: React.RefObject<HTMLVideoElement>
   params: ExtractionParams
   onParamsChange: (p: ExtractionParams) => void
+  aspectRatio: AspectRatio
+  onAspectRatioChange: (r: AspectRatio) => void
   extracting: boolean
   progress: { done: number; total: number } | null
   onExtract: () => void
@@ -30,15 +32,44 @@ type Props = {
   transcriptProgress: number | null
 }
 
+function MarkFrameBtn({ onClick, disabled }: { onClick: () => void; disabled: boolean }) {
+  return (
+    <button
+      className="btn btn-secondary btn-block"
+      style={{ marginBottom: 8, justifyContent: 'space-between' }}
+      onClick={onClick}
+      disabled={disabled}
+    >
+      <span style={{ display: 'flex', alignItems: 'center', gap: 6 }}>
+        <MapPin size={15} />
+        Mark frame
+      </span>
+      <kbd style={{
+        fontSize: 10, fontFamily: 'inherit',
+        background: 'var(--border)', color: 'var(--text-secondary)',
+        borderRadius: 4, padding: '1px 5px', fontWeight: 500, letterSpacing: 0.2,
+      }}>⌥D</kbd>
+    </button>
+  )
+}
+
 export default function Workspace({
   file, videoMode, duration, videoRef,
-  params, onParamsChange, extracting, progress, onExtract, onClearVideo,
+  params, onParamsChange, aspectRatio, onAspectRatioChange,
+  extracting, progress, onExtract, onClearVideo,
   markedFrames, onMark, onRemoveMark,
   transcriptEnabled, onTranscriptEnabledChange,
   transcriptLang, onTranscriptLangChange,
   transcriptStatus, transcriptMsg, transcriptProgress,
 }: Props) {
   const [videoMeta, setVideoMeta] = useState('')
+  const marksListRef = useRef<HTMLDivElement>(null)
+
+  // Keep the newest mark in view as the list grows
+  useEffect(() => {
+    const el = marksListRef.current
+    if (el) el.scrollTop = el.scrollHeight
+  }, [markedFrames.length])
 
   // Load file into the video element when it mounts or file changes
   useEffect(() => {
@@ -71,6 +102,8 @@ export default function Workspace({
     ? `1 / ${params.interval}s`
     : params.mode === 'count'
     ? `${params.count} frames`
+    : params.mode === 'storyboard'
+    ? 'storyboard'
     : `${markedFrames.length} marked`
 
   const totalEstimate = params.mode === 'interval'
@@ -85,24 +118,64 @@ export default function Workspace({
     ? markedFrames.length === 0
       ? 'Mark frames first'
       : `Extract ${markedFrames.length} marked frame${markedFrames.length !== 1 ? 's' : ''}`
+    : params.mode === 'storyboard'
+    ? transcriptStatus === 'done'
+      ? 'Generate storyboard'
+      : markedFrames.length > 0
+      ? `Generate storyboard (${markedFrames.length} frame${markedFrames.length !== 1 ? 's' : ''})`
+      : 'Mark frames to begin'
     : `Extract frames${totalEstimate > 0 ? ` (~${totalEstimate})` : ''}`
 
   const canExtract = !extracting && (
-    params.mode === 'custom' ? markedFrames.length > 0 : true
+    params.mode === 'custom'
+      ? markedFrames.length > 0
+      : params.mode === 'storyboard'
+      ? transcriptStatus === 'done' || markedFrames.length > 0
+      : true
   )
 
   // ── Mark frame handler ────────────────────────────────────────────────────
-  const handleMark = () => {
+  const handleMark = useCallback(() => {
     const v = videoRef.current
-    if (!v || !isFinite(v.currentTime)) return
+    if (!v || !isFinite(v.currentTime) || videoMode === 'ffmpeg') return
     const canvas = document.createElement('canvas')
     const scale = Math.min(1, 320 / (v.videoWidth || 320))
     canvas.width = Math.round((v.videoWidth || 320) * scale)
     canvas.height = Math.round((v.videoHeight || 180) * scale)
     canvas.getContext('2d')!.drawImage(v, 0, 0, canvas.width, canvas.height)
-    const thumbnail = canvas.toDataURL('image/jpeg', 0.7)
-    onMark(v.currentTime, thumbnail)
-  }
+    onMark(v.currentTime, canvas.toDataURL('image/jpeg', 0.7))
+  }, [videoRef, videoMode, onMark])
+
+  // ── ⌥D keyboard shortcut — refs avoid stale closures in the mount-once listener
+  const handleMarkRef = useRef(handleMark)
+  handleMarkRef.current = handleMark
+  const canMarkRef = useRef(false)
+  canMarkRef.current =
+    (params.mode === 'custom' || (params.mode === 'storyboard' && transcriptStatus !== 'done')) &&
+    videoMode !== 'ffmpeg'
+
+  useEffect(() => {
+    const onKey = (e: KeyboardEvent) => {
+      if (!canMarkRef.current) return
+      if (!e.altKey || e.code !== 'KeyD') return   // e.code not e.key — Alt+D gives '∂' on Mac
+      const t = e.target as HTMLElement
+      if (t instanceof HTMLTextAreaElement) return
+      if (t instanceof HTMLInputElement && t.type !== 'range') return
+      e.preventDefault()
+      handleMarkRef.current()
+    }
+    // capture:true — fires before native video shadow DOM consumes the event
+    window.addEventListener('keydown', onKey, true)
+    // Blur video on mouseup — removes focus from native scrubber so ⌥D fires after seeking
+    const v = videoRef.current
+    const onVideoMouseUp = () => videoRef.current?.blur()
+    v?.addEventListener('mouseup', onVideoMouseUp)
+    return () => {
+      window.removeEventListener('keydown', onKey, true)
+      v?.removeEventListener('mouseup', onVideoMouseUp)
+    }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [])
 
   return (
     <div style={{
@@ -146,7 +219,7 @@ export default function Workspace({
           {/* Sampling mode — 3 options */}
           <div className="field">
             <span className="field-label">Sampling mode</span>
-            <div className="seg" style={{ gridTemplateColumns: '1fr 1fr 1fr' }}>
+            <div className="seg seg-compact" style={{ gridTemplateColumns: '1fr 1fr 1fr 1fr' }}>
               <input type="radio" name="mode" id="mode-interval" value="interval"
                 checked={params.mode === 'interval'}
                 onChange={() => onParamsChange({ ...params, mode: 'interval' })} />
@@ -161,6 +234,11 @@ export default function Workspace({
                 checked={params.mode === 'custom'}
                 onChange={() => onParamsChange({ ...params, mode: 'custom' })} />
               <label htmlFor="mode-custom">Custom</label>
+
+              <input type="radio" name="mode" id="mode-storyboard" value="storyboard"
+                checked={params.mode === 'storyboard'}
+                onChange={() => onParamsChange({ ...params, mode: 'storyboard' })} />
+              <label htmlFor="mode-storyboard">Storyboard</label>
             </div>
           </div>
 
@@ -182,20 +260,37 @@ export default function Workspace({
             </div>
           )}
 
-          {/* Custom mode */}
-          {params.mode === 'custom' && (
-            <div className="field" style={{ marginBottom: 0 }}>
-              <span className="field-label">Manual selection</span>
+          {/* Storyboard mode — transcript ready banner */}
+          {params.mode === 'storyboard' && transcriptStatus === 'done' && (
+            <div style={{
+              display: 'flex', alignItems: 'center', gap: 8,
+              padding: '12px 14px',
+              background: 'var(--gray-100)', borderRadius: 'var(--radius-md)',
+              fontSize: 12, color: 'var(--text-secondary)',
+            }}>
+              <Check size={14} style={{ color: '#16a34a', flexShrink: 0 }} />
+              Transcript ready — frames will follow the transcript segments
+            </div>
+          )}
 
-              <button
-                className="btn btn-secondary btn-block"
-                style={{ marginBottom: 12 }}
-                onClick={handleMark}
-                disabled={videoMode === 'ffmpeg'}
-              >
-                <MapPin size={15} />
-                Mark frame
-              </button>
+          {/* Custom mode + Storyboard without transcript — manual marking */}
+          {(params.mode === 'custom' || (params.mode === 'storyboard' && transcriptStatus !== 'done')) && (
+            <div className="field" style={{ marginBottom: 0 }}>
+              <span className="field-label" style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'baseline' }}>
+                {params.mode === 'storyboard' ? 'Mark storyboard frames' : 'Manual selection'}
+                {markedFrames.length > 0 && (
+                  <span style={{
+                    fontSize: 11, textTransform: 'none', letterSpacing: 0,
+                    color: 'var(--text-placeholder)',
+                    fontFamily: 'JetBrains Mono, SF Mono, monospace',
+                    fontVariantNumeric: 'tabular-nums',
+                  }}>
+                    {markedFrames.length} mark{markedFrames.length !== 1 ? 's' : ''}
+                  </span>
+                )}
+              </span>
+
+              <MarkFrameBtn onClick={handleMark} disabled={videoMode === 'ffmpeg'} />
 
               {/* Marks list */}
               {markedFrames.length === 0 ? (
@@ -207,8 +302,8 @@ export default function Workspace({
                   Scrub the video and click Mark frame
                 </div>
               ) : (
-                <div style={{
-                  maxHeight: 240, overflowY: 'auto',
+                <div ref={marksListRef} style={{
+                  maxHeight: 153, overflowY: 'auto',
                   display: 'flex', flexDirection: 'column', gap: 6,
                   paddingRight: 2,
                 }}>
@@ -357,14 +452,31 @@ export default function Workspace({
             })()}
           </div>
 
-          {/* JPEG quality — flexShrink: 0 keeps it anchored regardless of list height */}
-          <div className="field" style={{ marginBottom: 24, marginTop: 16, flexShrink: 0 }}>
-            <span className="field-label">JPEG quality</span>
-            <div className="range-row">
-              <input type="range" min={0.5} max={1} step={0.05} value={params.quality}
-                onChange={(e) => onParamsChange({ ...params, quality: parseFloat(e.target.value) })} />
-              <span className="range-value">{params.quality.toFixed(2)}</span>
+          {/* JPEG quality + Frame ratio — flexShrink: 0 keeps them anchored regardless of list height */}
+          <div style={{ display: 'flex', gap: 14, alignItems: 'flex-start', marginBottom: 24, marginTop: 16, flexShrink: 0 }}>
+            <div className="field" style={{ flex: 1, minWidth: 0, marginBottom: 0 }}>
+              <span className="field-label">JPEG quality</span>
+              <div className="range-row">
+                <input type="range" min={0.5} max={1} step={0.05} value={params.quality}
+                  onChange={(e) => onParamsChange({ ...params, quality: parseFloat(e.target.value) })} />
+                <span className="range-value">{params.quality.toFixed(2)}</span>
+              </div>
             </div>
+            {params.mode === 'storyboard' && (
+              <div className="field" style={{ flexShrink: 0, marginBottom: 0 }}>
+                <span className="field-label">Frame ratio</span>
+                <div className="seg" style={{ gridTemplateColumns: 'repeat(4, 1fr)' }}>
+                  <input type="radio" name="aspect-ratio" id="ar-16-9" checked={aspectRatio === '16:9'} onChange={() => onAspectRatioChange('16:9')} />
+                  <label htmlFor="ar-16-9" style={{ fontSize: 11, padding: '5px 4px' }}>16:9</label>
+                  <input type="radio" name="aspect-ratio" id="ar-1-1" checked={aspectRatio === '1:1'} onChange={() => onAspectRatioChange('1:1')} />
+                  <label htmlFor="ar-1-1" style={{ fontSize: 11, padding: '5px 4px' }}>1:1</label>
+                  <input type="radio" name="aspect-ratio" id="ar-4-5" checked={aspectRatio === '4:5'} onChange={() => onAspectRatioChange('4:5')} />
+                  <label htmlFor="ar-4-5" style={{ fontSize: 11, padding: '5px 4px' }}>4:5</label>
+                  <input type="radio" name="aspect-ratio" id="ar-9-16" checked={aspectRatio === '9:16'} onChange={() => onAspectRatioChange('9:16')} />
+                  <label htmlFor="ar-9-16" style={{ fontSize: 11, padding: '5px 4px' }}>9:16</label>
+                </div>
+              </div>
+            )}
           </div>
 
           <div style={{ display: 'flex', gap: 8 }}>

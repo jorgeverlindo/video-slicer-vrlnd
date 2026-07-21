@@ -1,16 +1,19 @@
 import { useState, useEffect, useRef } from 'react'
-import { Download, X, Copy, Check, Loader2, Mic, FileImage, ArrowDownToLine, RefreshCw } from 'lucide-react'
-import type { Frame } from '../lib/extractor'
+import { Download, X, Copy, Check, Loader2, Mic, FileImage, ArrowDownToLine, RefreshCw, LayoutGrid } from 'lucide-react'
+import type { Frame, AspectRatio, ExtractionParams } from '../lib/extractor'
 import { fmtTimecode } from '../lib/extractor'
 import type { TranscriptResult, TranscriptStatus, TranscriptLang } from '../lib/transcript-types'
 import { transcriptToMarkdown } from '../lib/transcript-types'
 import { frameFilename, packAsZip, triggerDownload } from '../lib/zip'
+import StoryboardView from './StoryboardView'
 
-type Tab = 'frames' | 'transcript'
+type Tab = 'frames' | 'transcript' | 'storyboard'
 
 type Props = {
   frames: Frame[]
   onClear: () => void
+  mode: ExtractionParams['mode']
+  aspectRatio?: AspectRatio
   transcriptStatus: TranscriptStatus
   transcriptMsg: string
   transcriptResult: TranscriptResult | null
@@ -21,7 +24,7 @@ type Props = {
 }
 
 export default function ResultsArea({
-  frames, onClear,
+  frames, onClear, mode, aspectRatio,
   transcriptStatus, transcriptMsg, transcriptResult, transcriptProgress,
   filename, transcriptLang, onTranscriptLangChange,
 }: Props) {
@@ -31,14 +34,17 @@ export default function ResultsArea({
   const [copied, setCopied]               = useState(false)
   const prevLen                           = useRef(0)
 
-  // Auto-switch to Frames when the first frame arrives
+  const isStoryboard = mode === 'storyboard'
+
+  // Auto-switch when the first frame arrives — storyboard tab in storyboard mode
   useEffect(() => {
-    if (prevLen.current === 0 && frames.length > 0) setActiveTab('frames')
+    if (prevLen.current === 0 && frames.length > 0) setActiveTab(isStoryboard ? 'storyboard' : 'frames')
     if (frames.length === 0 && transcriptStatus !== 'idle') setActiveTab('transcript')
     prevLen.current = frames.length
-  }, [frames.length, transcriptStatus])
+  }, [frames.length, transcriptStatus, isStoryboard])
 
   const hasFrames     = frames.length > 0
+  const hasStoryboard = hasFrames && isStoryboard
   const hasTranscript = transcriptStatus !== 'idle'
   if (!hasFrames && !hasTranscript) return null
 
@@ -112,6 +118,16 @@ export default function ResultsArea({
                 <FileImage size={16} />
                 Frames
                 <span className="results-count-chip">{frames.length}</span>
+              </TabBtn>
+            )}
+
+            {hasStoryboard && (
+              <TabBtn
+                active={activeTab === 'storyboard'}
+                onClick={() => setActiveTab('storyboard')}
+              >
+                <LayoutGrid size={16} />
+                Storyboard
               </TabBtn>
             )}
 
@@ -228,6 +244,16 @@ export default function ResultsArea({
         ) : (
           <Empty>Extract frames to see them here</Empty>
         )
+      )}
+
+      {/* ── Storyboard tab ───────────────────────────────────────────────── */}
+      {activeTab === 'storyboard' && hasStoryboard && (
+        <StoryboardView
+          frames={frames}
+          chunks={frames.map((_, i) => transcriptResult?.chunks?.[i])}
+          filename={filename}
+          aspectRatio={aspectRatio}
+        />
       )}
 
       {/* ── Transcript tab ───────────────────────────────────────────────── */}
