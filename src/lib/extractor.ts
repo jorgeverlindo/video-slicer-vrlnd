@@ -10,6 +10,7 @@ export type ExtractionParams = {
   interval: number
   count: number
   quality: number
+  uniqueOnly: boolean
 }
 
 export type AspectRatio = '16:9' | '1:1' | '4:5' | '9:16'
@@ -54,6 +55,40 @@ function canvasToBlob(canvas: HTMLCanvasElement, quality: number): Promise<Blob>
   })
 }
 
+// ── Unique-frame detection ───────────────────────────────────────────────────
+// Frames are compared on a 32×18 grayscale thumbnail against the last KEPT
+// frame. Mean absolute pixel difference below UNIQUE_THRESHOLD (2% of full
+// scale) marks a duplicate — it is skipped before the costly JPEG encode.
+
+const THUMB_W = 32
+const THUMB_H = 18
+export const UNIQUE_THRESHOLD = 0.02
+
+export function makeUniqueDetector() {
+  const canvas = document.createElement('canvas')
+  canvas.width = THUMB_W
+  canvas.height = THUMB_H
+  const ctx = canvas.getContext('2d', { willReadFrequently: true })!
+  let prev: Float32Array | null = null
+
+  return {
+    isUnique(source: CanvasImageSource): boolean {
+      ctx.drawImage(source, 0, 0, THUMB_W, THUMB_H)
+      const rgba = ctx.getImageData(0, 0, THUMB_W, THUMB_H).data
+      const gray = new Float32Array(THUMB_W * THUMB_H)
+      for (let i = 0; i < gray.length; i++) {
+        const j = i * 4
+        gray[i] = rgba[j] * 0.299 + rgba[j + 1] * 0.587 + rgba[j + 2] * 0.114
+      }
+      if (!prev) { prev = gray; return true }
+      let sum = 0
+      for (let i = 0; i < gray.length; i++) sum += Math.abs(gray[i] - prev[i])
+      if (sum / gray.length / 255 > UNIQUE_THRESHOLD) { prev = gray; return true }
+      return false
+    },
+  }
+}
+
 export function buildTimestamps(duration: number, params: ExtractionParams): number[] {
   if (params.mode === 'interval') {
     const step = Math.max(0.1, params.interval)
@@ -71,22 +106,35 @@ export function buildTimestamps(duration: number, params: ExtractionParams): num
 export async function* extractNative(
   video: HTMLVideoElement,
   timestamps: number[],
-  quality: number
+  quality: number,
+  uniqueOnly = false,
+  onScan?: (scanned: number) => void
 ): AsyncGenerator<Frame> {
   const canvas = document.createElement('canvas')
   canvas.width = video.videoWidth
   canvas.height = video.videoHeight
   const ctx = canvas.getContext('2d')!
+  const detector = uniqueOnly ? makeUniqueDetector() : null
+  let kept = 0
 
   for (let i = 0; i < timestamps.length; i++) {
     await seekTo(video, timestamps[i])
     // createImageBitmap is async — captures the decoded frame without blocking
     // the main thread on a GPU pipeline sync (which ctx.drawImage does synchronously).
     const bitmap = await createImageBitmap(video)
+    // Duplicate check runs on the bitmap BEFORE the full-res draw + JPEG encode,
+    // so skipped frames cost almost nothing.
+    if (detector && !detector.isUnique(bitmap)) {
+      bitmap.close()
+      onScan?.(i + 1)
+      continue
+    }
     ctx.drawImage(bitmap, 0, 0, canvas.width, canvas.height)
     bitmap.close()
     const blob = await canvasToBlob(canvas, quality)
-    yield { index: i + 1, timestamp: timestamps[i], blob, url: URL.createObjectURL(blob) }
+    kept++
+    onScan?.(i + 1)
+    yield { index: kept, timestamp: timestamps[i], blob, url: URL.createObjectURL(blob) }
   }
 }
 
@@ -148,10 +196,14 @@ export async function* extractFFmpeg(
   ff: import('@ffmpeg/ffmpeg').FFmpeg,
   inputName: string,
   timestamps: number[],
-  quality: number
+  quality: number,
+  uniqueOnly = false,
+  onScan?: (scanned: number) => void
 ): AsyncGenerator<Frame> {
   // FFmpeg qscale: 2 = best, 31 = worst. Map quality [0.5–1] → qscale [26–2]
   const qScale = Math.round((1 - quality) * 26 + 2)
+  const detector = uniqueOnly ? makeUniqueDetector() : null
+  let kept = 0
 
   for (let i = 0; i < timestamps.length; i++) {
     const outName = `out_${i}.jpg`
@@ -165,7 +217,16 @@ export async function* extractFFmpeg(
     const data = await ff.readFile(outName)
     const blob = new Blob([data instanceof Uint8Array ? data.buffer : data], { type: 'image/jpeg' })
     try { await ff.deleteFile(outName) } catch (_) { /* ignore */ }
-    yield { index: i + 1, timestamp: timestamps[i], blob, url: URL.createObjectURL(blob) }
+    // FFmpeg emits ready-made JPEGs — decode to compare against the last kept frame
+    if (detector) {
+      const bitmap = await createImageBitmap(blob)
+      const unique = detector.isUnique(bitmap)
+      bitmap.close()
+      if (!unique) { onScan?.(i + 1); continue }
+    }
+    kept++
+    onScan?.(i + 1)
+    yield { index: kept, timestamp: timestamps[i], blob, url: URL.createObjectURL(blob) }
   }
 }
 

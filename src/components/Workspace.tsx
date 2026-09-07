@@ -124,6 +124,8 @@ export default function Workspace({
       : markedFrames.length > 0
       ? `Generate storyboard (${markedFrames.length} frame${markedFrames.length !== 1 ? 's' : ''})`
       : 'Mark frames to begin'
+    : params.uniqueOnly
+    ? `Extract unique frames${totalEstimate > 0 ? ` (scans ~${totalEstimate})` : ''}`
     : `Extract frames${totalEstimate > 0 ? ` (~${totalEstimate})` : ''}`
 
   const canExtract = !extracting && (
@@ -368,6 +370,28 @@ export default function Workspace({
             borderTop: '1px solid var(--border)',
             paddingTop: 16, marginBottom: 16, flexShrink: 0,
           }}>
+            {/* Only unique frames — sampled modes only; hand-picked modes skip dedup */}
+            {(params.mode === 'interval' || params.mode === 'count') && (
+              <label style={{
+                display: 'flex', alignItems: 'center', gap: 8,
+                cursor: 'pointer', userSelect: 'none',
+                marginBottom: 10,
+              }}>
+                <input
+                  type="checkbox"
+                  checked={!!params.uniqueOnly}
+                  onChange={e => onParamsChange({ ...params, uniqueOnly: e.target.checked })}
+                  style={{ accentColor: 'var(--brand)', width: 14, height: 14, flexShrink: 0 }}
+                />
+                <span style={{ fontSize: 14, fontWeight: 300, color: 'var(--text-primary)' }}>
+                  Only unique frames
+                </span>
+                <span style={{ fontSize: 10, color: 'var(--text-secondary)', opacity: 0.7 }}>
+                  skips near-identical frames
+                </span>
+              </label>
+            )}
+
             <label style={{
               display: 'flex', alignItems: 'center', gap: 8,
               cursor: 'pointer', userSelect: 'none',

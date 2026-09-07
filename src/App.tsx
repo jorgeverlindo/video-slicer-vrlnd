@@ -47,6 +47,7 @@ const DEFAULT_PARAMS: ExtractionParams = {
   interval: 1,
   count: 20,
   quality: 0.85,
+  uniqueOnly: false,
 }
 
 export default function App() {
@@ -199,14 +200,19 @@ export default function App() {
     const collected: Frame[] = []
 
     try {
+      // Dedup applies only to sampled modes — custom/storyboard frames are hand-picked
+      const uniqueOnly = params.uniqueOnly && (params.mode === 'interval' || params.mode === 'count')
+      const onScan = (scanned: number) =>
+        setState((s) => ({ ...s, progress: { done: scanned, total } }))
+
       const gen = state.videoMode === 'ffmpeg' && ffmpegInstanceRef.current && ffmpegInputRef.current
-        ? extractFFmpeg(ffmpegInstanceRef.current, ffmpegInputRef.current, timestamps, params.quality)
-        : extractNative(videoRef.current!, timestamps, params.quality)
+        ? extractFFmpeg(ffmpegInstanceRef.current, ffmpegInputRef.current, timestamps, params.quality, uniqueOnly, onScan)
+        : extractNative(videoRef.current!, timestamps, params.quality, uniqueOnly, onScan)
 
       for await (const frame of gen) {
         collected.push(frame)
         const snapshot = [...collected]
-        setState((s) => ({ ...s, frames: snapshot, progress: { done: snapshot.length, total } }))
+        setState((s) => ({ ...s, frames: snapshot }))
       }
     } catch (e: unknown) {
       const msg = e instanceof Error ? e.message : String(e)
