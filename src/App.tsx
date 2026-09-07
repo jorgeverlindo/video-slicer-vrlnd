@@ -27,7 +27,7 @@ type AppState = {
   frames: Frame[]
   markedFrames: MarkedFrame[]
   extracting: boolean
-  progress: { done: number; total: number } | null
+  progress: { done: number; total: number; kept?: number } | null
   error: string | null
   status: string | null
   showFallbackHelp: boolean
@@ -203,7 +203,10 @@ export default function App() {
       // Dedup applies only to sampled modes — custom/storyboard frames are hand-picked
       const uniqueOnly = params.uniqueOnly && (params.mode === 'interval' || params.mode === 'count')
       const onScan = (scanned: number) =>
-        setState((s) => ({ ...s, progress: { done: scanned, total } }))
+        setState((s) => ({
+          ...s,
+          progress: { done: scanned, total, kept: uniqueOnly ? collected.length : undefined },
+        }))
 
       const gen = state.videoMode === 'ffmpeg' && ffmpegInstanceRef.current && ffmpegInputRef.current
         ? extractFFmpeg(ffmpegInstanceRef.current, ffmpegInputRef.current, timestamps, params.quality, uniqueOnly, onScan)
@@ -212,7 +215,11 @@ export default function App() {
       for await (const frame of gen) {
         collected.push(frame)
         const snapshot = [...collected]
-        setState((s) => ({ ...s, frames: snapshot }))
+        setState((s) => ({
+          ...s,
+          frames: snapshot,
+          progress: s.progress && uniqueOnly ? { ...s.progress, kept: snapshot.length } : s.progress,
+        }))
       }
     } catch (e: unknown) {
       const msg = e instanceof Error ? e.message : String(e)

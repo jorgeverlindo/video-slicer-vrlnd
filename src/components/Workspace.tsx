@@ -17,7 +17,7 @@ type Props = {
   aspectRatio: AspectRatio
   onAspectRatioChange: (r: AspectRatio) => void
   extracting: boolean
-  progress: { done: number; total: number } | null
+  progress: { done: number; total: number; kept?: number } | null
   onExtract: () => void
   onClearVideo: () => void
   markedFrames: MarkedFrame[]
@@ -526,7 +526,10 @@ export default function Workspace({
             <div className="progress" style={{ marginTop: 16 }}>
               <div className="progress-meta">
                 <span>Processing</span>
-                <span className="count">{progress.done} / {progress.total}</span>
+                <span className="count">
+                  {progress.done} / {progress.total}
+                  {progress.kept != null && ` · ${progress.kept} unique`}
+                </span>
               </div>
               <div className="progress-bar">
                 <div className="progress-bar-fill" style={{ width: `${(progress.done / progress.total) * 100}%` }} />
