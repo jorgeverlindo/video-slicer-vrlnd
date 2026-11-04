@@ -769,3 +769,40 @@ footer {
 @media (prefers-reduced-motion: reduce) {
   .hiw-dialog[open] { animation: none; }
 }
+
+/* ── Entrance (first load only) ───────────────────────────────────────────
+   main.tsx puts .intro on <html> before the first render and takes it off
+   once the sequence is over, so going back to the upload screen does not
+   replay it. Each element comes into focus (blur + scale + short rise),
+   staggered top to bottom. Only opacity/transform/filter move: no layout
+   shift.                                                                  */
+:root {
+  --intro-ease: cubic-bezier(0.22, 1, 0.36, 1);
+  --intro-dur: 1000ms;
+  --intro-step: 100ms;
+  --intro-lead: 120ms;
+}
+.intro :is(.navbar, .hero-eyebrow, .hero h1, .hero-row, .dropzone, .url-input-wrap, #root > footer) {
+  animation: intro-focus var(--intro-dur) var(--intro-ease) both;
+  animation-delay: calc(var(--intro-lead) + var(--i, 0) * var(--intro-step));
+}
+.intro .navbar         { --i: 0; animation-name: intro-fade; }
+.intro .hero-eyebrow   { --i: 1; }
+.intro .hero h1        { --i: 2; }
+.intro .hero-row       { --i: 3; }
+.intro .dropzone       { --i: 4; }
+.intro .url-input-wrap { --i: 5; }
+.intro #root > footer  { --i: 7; animation-name: intro-fade; }
+
+@keyframes intro-focus {
+  from { opacity: 0; transform: translate3d(0, 12px, 0) scale(0.97); filter: blur(10px); }
+  60%  { filter: blur(0); }
+}
+@keyframes intro-fade { from { opacity: 0; } }
+
+@media (prefers-reduced-motion: reduce) {
+  .intro :is(.navbar, .hero-eyebrow, .hero h1, .hero-row, .dropzone, .url-input-wrap, #root > footer) {
+    animation: intro-fade 300ms ease both;
+    animation-delay: 0ms;
+  }
+}
