@@ -120,14 +120,13 @@ function UrlInput({ onFile }: { onFile: (file: File) => void }) {
 
   return (
     <div className="url-input-wrap">
-      <div className="url-input-divider">
-        <span>or paste a video URL</span>
-      </div>
+      <label className="url-input-label" htmlFor="video-url">Or paste a video URL</label>
 
       <form onSubmit={handleLoad} className="url-input-form">
         <div className="url-input-field-wrap">
           <Link size={14} className="url-input-icon" />
           <input
+            id="video-url"
             type="url"
             className="url-input-field"
             placeholder="https://example.com/video.mp4"

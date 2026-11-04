@@ -5,6 +5,7 @@ import { useTheme } from './components/ThemeToggle'
 import Dropzone from './components/Dropzone'
 import Workspace from './components/Workspace'
 import ResultsArea from './components/ResultsArea'
+import HowItWorks from './components/HowItWorks'
 import type { Frame, ExtractionParams, AspectRatio } from './lib/extractor'
 import {
   buildTimestamps, extractNative, extractFFmpeg,
@@ -256,39 +257,24 @@ export default function App() {
     <>
       <Navbar theme={theme} onToggleTheme={toggleTheme} />
 
-      <main style={{ width: 'min(1200px, 92%)', margin: '0 auto', padding: '40px 0 24px' }}>
+      <main className="page" style={{ padding: '40px 0 24px' }}>
 
         {/* Hero */}
-        <header style={{ marginBottom: 48 }}>
-          <p style={{
-            fontFamily: "'Macklin Sans', 'DM Sans', sans-serif",
-            fontSize: 12, fontWeight: 300, textTransform: 'uppercase',
-            letterSpacing: '0.08em', color: 'var(--text-secondary)',
-            marginBottom: 12,
-          }}>
+        <header className="hero">
+          <p className="hero-eyebrow">
             A tool by{' '}
-            <a
-              href="https://jorgeverlindo.design"
-              style={{
-                color: 'var(--brand)',
-                textDecoration: 'none',
-                borderBottom: '1px solid var(--brand-35)',
-                paddingBottom: '1px',
-                transition: 'border-color var(--t-fast)',
-              }}
-            >
+            <a href="https://jorgeverlindo.design">
               Jorge Verlindo
             </a>
           </p>
           <h1>Video Slicer</h1>
-          <p style={{
-            fontFamily: "'Macklin Sans', 'DM Sans', sans-serif",
-            color: 'var(--text-secondary)', fontSize: 18,
-            fontWeight: 300, marginTop: 16, lineHeight: 1.5,
-          }}>
-            Extract frames from any video, locally in your browser.
-            No upload, no server — the file never leaves your machine.
-          </p>
+          <div className="hero-row">
+            <p className="hero-sub">
+              Extract frames from any video, locally in your browser.
+              No upload, no server — the file never leaves your machine.
+            </p>
+            <HowItWorks theme={theme} />
+          </div>
         </header>
 
         {/* Dropzone */}
@@ -396,7 +382,7 @@ export default function App() {
 
       </main>
 
-      <footer>
+      <footer className="page">
         <div className="footer-left">
           Jorge Verlindo 2026
         </div>

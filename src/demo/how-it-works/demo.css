@@ -1,0 +1,849 @@
+/* Video Slicer, How it works. The kit's tokens point at the app's own
+   (tokens.css), so the demo follows the app's light and dark themes. The
+   fallbacks are the light values, for previews outside the app. */
+
+.vsd .ss-stage {
+  --vs-brand: var(--brand, rgb(70, 67, 62));
+  --vs-bg: var(--app-bg, rgb(247, 240, 235));
+  --vs-card: var(--white, rgb(245, 242, 237));
+  --vs-text: var(--text-primary, rgba(0, 0, 0, 0.85));
+  --vs-text-2: var(--text-secondary, rgba(0, 0, 0, 0.67));
+  --vs-muted: var(--text-muted, rgba(0, 0, 0, 0.5));
+  --vs-border: var(--border, rgba(0, 0, 0, 0.1));
+  --vs-gray: var(--gray-100, rgba(70, 67, 62, 0.07));
+  --vs-gray-2: var(--gray-150, rgba(70, 67, 62, 0.11));
+  --vs-brand-10: var(--brand-10, rgba(70, 67, 62, 0.1));
+  --vs-brand-35: var(--brand-35, rgba(70, 67, 62, 0.35));
+  --vs-ok: var(--success-icon, #4caf50);
+  /* Icons are one opaque color: the brown, softened toward the card */
+  --vs-icon: color-mix(in srgb, var(--vs-brand) 78%, var(--vs-card));
+  --vs-sans: 'Macklin Sans', 'DM Sans', system-ui, sans-serif;
+  --vs-mono: 'JetBrains Mono', 'SF Mono', ui-monospace, monospace;
+
+  --ss-accent: var(--vs-brand);
+  --ss-accent-soft: var(--vs-brand-10);
+  --ss-canvas: var(--vs-bg);
+  --ss-surface: var(--vs-card);
+  --ss-chrome: var(--vs-card);
+  --ss-text-strong: var(--vs-text);
+  --ss-text: var(--vs-text-2);
+  --ss-text-faint: var(--vs-muted);
+  --ss-icon: var(--vs-icon);
+  --ss-line: var(--vs-border);
+  --ss-font: var(--vs-sans);
+  --ss-mono: var(--vs-mono);
+  --ss-radius-sm: 4px;
+  --ss-radius-md: 6px;
+  --ss-radius-lg: 8px;
+  --ss-radius-window: 12px;
+
+  overflow: hidden;
+  border-radius: 14px;
+  /* The desktop: one step under the page, in the app's own brown */
+  background: color-mix(in srgb, var(--vs-brand) 9%, var(--vs-bg));
+  font-family: var(--vs-sans);
+  color: var(--vs-text);
+}
+
+.vsd-art {
+  display: block;
+  width: 100%;
+  height: 100%;
+}
+
+/* ---- The desktop file ---- */
+
+.vsd-desk {
+  position: absolute;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 8px;
+  width: 112px;
+  transition: opacity 0.2s ease;
+}
+
+.vsd-desk[data-lifted] { opacity: 0.45; }
+
+.vsd-desk__thumb {
+  display: block;
+  width: 96px;
+  height: 54px;
+  border-radius: 5px;
+  overflow: hidden;
+  box-shadow: 0 0 0 0.5px rgba(0, 0, 0, 0.2), 0 3px 8px -3px rgba(0, 0, 0, 0.3);
+}
+
+.vsd-desk__name,
+.vsd-drag__name {
+  padding: 1px 6px;
+  border-radius: 4px;
+  font-size: 12px;
+  line-height: 1.35;
+  white-space: nowrap;
+  color: var(--vs-text);
+}
+
+.vsd .ss-stage[data-layout='compact'] .vsd-desk {
+  flex-direction: row;
+  width: auto;
+  gap: 10px;
+}
+
+.vsd .ss-stage[data-layout='compact'] .vsd-desk__thumb {
+  width: 76px;
+  height: 43px;
+}
+
+/* ---- The drag image ---- */
+
+.vsd-drag {
+  position: absolute;
+  top: 0;
+  left: 0;
+  z-index: 30;
+  pointer-events: none;
+  opacity: 0;
+  will-change: transform;
+}
+
+.vsd-drag[data-show] {
+  opacity: 0.9;
+  transition: opacity 0.16s ease-out;
+}
+
+.vsd-drag__inner {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 8px;
+  width: 112px;
+  will-change: transform;
+}
+
+.vsd .ss-stage[data-layout='compact'] .vsd-drag__inner {
+  flex-direction: row;
+  width: auto;
+  gap: 10px;
+}
+
+.vsd .ss-stage[data-layout='compact'] .vsd-drag .vsd-desk__thumb {
+  width: 76px;
+  height: 43px;
+}
+
+.vsd-drag[data-dropped] {
+  opacity: 0;
+  transition: opacity 0.22s ease-in;
+}
+
+.vsd-drag[data-dropped] .vsd-drag__inner {
+  transform: scale(0.5);
+  transition: transform 0.24s cubic-bezier(0.4, 0, 0.2, 1);
+}
+
+.vsd-drag__name {
+  background: var(--vs-brand);
+  color: var(--vs-bg);
+}
+
+/* ---- The window ---- */
+
+.vsd-win {
+  position: absolute;
+  box-shadow: var(--ss-shadow-hero);
+}
+
+.vsd-body {
+  position: relative;
+  overflow: hidden;
+  background: var(--vs-bg);
+}
+
+.vsd-page {
+  padding: 20px 24px 40px;
+  will-change: transform;
+  transition: transform 0.8s cubic-bezier(0.45, 0, 0.1, 1);
+}
+
+.vsd-page[data-scrolled] {
+  transition: transform 0.8s cubic-bezier(0.45, 0, 0.1, 1) 0.26s;
+  transform: translateY(calc(-1 * var(--vs-shift, 0px)));
+}
+
+/* What scrolls away under the top edge fades first, so nothing is cut hard */
+.vsd-hero,
+.vsd-work {
+  /* Coming back, they fade up only once they are below the top edge */
+  transition: opacity 0.35s ease 0.6s;
+}
+
+.vsd-page[data-scrolled] .vsd-hero,
+.vsd-page[data-scrolled] .vsd-work {
+  opacity: 0;
+  transition: opacity 0.18s ease;
+}
+
+.vsd-results { will-change: transform; }
+
+.vsd .vsd-card__title svg,
+.vsd .vsd-select svg,
+.vsd .vsd-tab svg {
+  flex: none;
+  color: var(--vs-icon);
+}
+
+.vsd .ss-stage[data-layout='compact'] .vsd-page {
+  padding: 14px 12px 40px;
+}
+
+.vsd-dl-icon {
+  display: grid;
+  place-items: center;
+  width: 26px;
+  height: 24px;
+  margin-left: auto;
+  border-radius: 6px;
+  color: var(--vs-text-2);
+  transition: background-color 0.2s ease, color 0.2s ease;
+}
+
+.vsd-dl-icon[data-on] {
+  background: var(--vs-brand-10);
+  color: var(--vs-brand);
+}
+
+/* ---- Dropzone ---- */
+
+.vsd-drop {
+  flex: none;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: 8px;
+  height: 200px;
+  border-radius: 14px;
+  border: 1.5px dashed var(--vs-brand-35);
+  background: var(--vs-card);
+  transition: background-color 0.15s ease, border-color 0.15s ease;
+}
+
+.vsd-drop[data-over] {
+  border-color: var(--vs-brand);
+  background: color-mix(in srgb, var(--vs-brand) 6%, var(--vs-card));
+}
+
+.vsd-drop__icon {
+  display: grid;
+  place-items: center;
+  width: 44px;
+  height: 44px;
+  margin-bottom: 4px;
+  border-radius: 50%;
+  background: var(--vs-brand-10);
+  color: var(--vs-brand);
+}
+
+.vsd-drop__title {
+  font-size: 15px;
+  color: var(--vs-text);
+}
+
+.vsd-drop__hint {
+  font-size: 12px;
+  color: var(--vs-text-2);
+}
+
+/* ---- Cards ---- */
+
+.vsd-work {
+  display: grid;
+  grid-template-columns: 286px minmax(0, 1fr);
+  gap: 12px;
+  align-items: stretch;
+}
+
+.vsd-work[data-compact] {
+  grid-template-columns: minmax(0, 1fr);
+}
+
+.vsd-card {
+  position: relative;
+  border-radius: 14px;
+  border: 1px solid var(--vs-border);
+  background: var(--vs-card);
+  box-shadow: 0 2px 4px rgba(70, 67, 62, 0.1);
+}
+
+.vsd-card__head {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  gap: 12px;
+  padding: 12px 16px 6px;
+}
+
+.vsd-card__title,
+.vsd-label {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  font-size: 11px;
+  text-transform: uppercase;
+  letter-spacing: 0.08em;
+  line-height: 20px;
+  color: var(--vs-text-2);
+}
+
+.vsd-card__meta {
+  font-family: var(--vs-mono);
+  font-size: 11px;
+  color: var(--vs-text-2);
+  white-space: nowrap;
+}
+
+.vsd-source__file {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  gap: 12px;
+  padding: 0 16px 16px;
+}
+
+.vsd-source__name {
+  font-size: 13px;
+  color: var(--vs-text);
+}
+
+.vsd-source {
+  display: flex;
+  flex-direction: column;
+}
+
+.vsd-source__video {
+  margin: 6px 16px auto;
+  aspect-ratio: 16 / 9;
+  border-radius: 8px;
+  overflow: hidden;
+}
+
+.vsd-work[data-compact] .vsd-source {
+  display: grid;
+  grid-template-columns: 112px minmax(0, 1fr);
+  align-items: center;
+}
+
+.vsd-work[data-compact] .vsd-source .vsd-card__head {
+  grid-column: 2;
+  grid-row: 1;
+  flex-direction: column;
+  align-items: flex-start;
+  gap: 2px;
+  padding: 12px 14px 12px 4px;
+}
+
+.vsd-work[data-compact] .vsd-source__video {
+  grid-column: 1;
+  grid-row: 1;
+  margin: 12px;
+  width: 88px;
+}
+
+.vsd-params__body {
+  position: relative;
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+  padding: 6px 16px 0;
+}
+
+.vsd-label { margin-bottom: -3px; }
+
+.vsd-seg {
+  display: grid;
+  grid-template-columns: repeat(4, minmax(0, 1fr));
+  padding: 3px;
+  border-radius: 6px;
+  background: var(--vs-gray);
+}
+
+.vsd-seg__opt {
+  padding: 6px 2px;
+  border-radius: 4px;
+  text-align: center;
+  font-size: 11px;
+  text-transform: uppercase;
+  white-space: nowrap;
+  color: var(--vs-text-2);
+}
+
+.vsd-seg__opt[data-on] {
+  background: var(--vs-card);
+  color: var(--vs-brand);
+  box-shadow: 0 2px 4px rgba(70, 67, 62, 0.1);
+}
+
+.vsd-rule {
+  height: 1px;
+  margin: 2px 0;
+  background: var(--vs-border);
+}
+
+/* ---- Checkbox (the app's native box, in its brand) ---- */
+
+.vsd-check {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  align-self: flex-start;
+  font-size: 13px;
+  line-height: 18px;
+  white-space: nowrap;
+}
+
+.vsd-check__box {
+  display: grid;
+  place-items: center;
+  flex: none;
+  width: 15px;
+  height: 15px;
+  border-radius: 4px;
+  box-shadow: inset 0 0 0 1.25px var(--vs-brand-35);
+  background: var(--vs-card);
+  color: var(--vs-bg);
+  transition: background-color 0.16s ease, box-shadow 0.16s ease;
+}
+
+.vsd-check__box[data-on] {
+  background: var(--vs-brand);
+  box-shadow: none;
+  color: var(--vs-bg);
+}
+
+.vsd-check__box svg {
+  opacity: 0;
+  transform: scale(0.6);
+  transition: opacity 0.14s ease, transform 0.22s cubic-bezier(0.34, 1.56, 0.64, 1);
+}
+
+.vsd-check__box[data-on] svg { opacity: 1; transform: scale(1); }
+
+.vsd-check__hint {
+  font-size: 10px;
+  color: var(--vs-muted);
+}
+
+/* ---- Language select and model status ---- */
+
+.vsd-lang-row {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  padding: 2px 0 1px 23px;
+}
+
+.vsd-select {
+  display: inline-flex;
+  flex: none;
+  align-items: center;
+  gap: 6px;
+  height: 26px;
+  padding: 0 8px 0 10px;
+  border-radius: 999px;
+  border: 1px solid var(--vs-border);
+  font-size: 12px;
+  color: var(--vs-text-2);
+  background: var(--vs-card);
+}
+
+.vsd-select[data-open] { border-color: var(--vs-brand-35); }
+
+.vsd-select__text { min-width: 96px; }
+.vsd-select__text [data-chosen] { color: var(--vs-text); }
+
+.vsd-model { min-width: 0; font-size: 12px; color: var(--vs-text-2); }
+
+.vsd-model__line {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  white-space: nowrap;
+}
+
+.vsd-model__meter {
+  width: 72px;
+  background: var(--vs-gray-2);
+}
+
+.vsd-model__meter .ss-meter__fill {
+  background: var(--vs-brand);
+  transition-duration: 0.28s;
+}
+
+.vsd-model__pct {
+  display: inline-block;
+  min-width: 4.2ch;
+  font-family: var(--vs-mono);
+  font-size: 11px;
+}
+
+.vsd-model__ready { color: var(--vs-text); }
+.vsd-model__ready svg { color: var(--vs-ok); }
+
+.vsd-lang-menu {
+  position: absolute;
+  z-index: 5;
+  left: 39px;
+  /* Opens upward from the select: below it the card meets the stage edge */
+  bottom: 34px;
+  width: 150px;
+  padding: 4px;
+  border-radius: 10px;
+  --ss-popover-bg: var(--vs-card);
+}
+
+.vsd-lang-menu .ss-menu__item {
+  font-size: 13px;
+  color: var(--vs-text);
+}
+
+.vsd-lang-menu .ss-menu__item[data-active] {
+  background: var(--vs-brand-10);
+}
+
+.vsd-params__foot {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) minmax(0, 1.5fr);
+  gap: 8px;
+  padding: 16px;
+}
+
+/* The app's buttons: pill, uppercase, light weight */
+.vsd .vsd-btn {
+  --ss-button-height: 34px;
+  --ss-button-pad: 14px;
+  --ss-button-pad-icon: 12px;
+  border-radius: 999px;
+  font-size: 12px;
+  font-weight: 400;
+  letter-spacing: 0.02em;
+  text-transform: uppercase;
+  color: var(--vs-brand);
+  background: var(--vs-bg);
+  box-shadow: inset 0 0 0 1px var(--vs-border);
+}
+
+.vsd .vsd-btn[data-variant='primary'] {
+  background: var(--vs-brand);
+  color: var(--vs-bg);
+  box-shadow: none;
+}
+
+.vsd .vsd-btn[data-variant='primary'][data-hover] {
+  background: color-mix(in srgb, var(--vs-brand), #000 10%);
+}
+
+/* ---- Results ---- */
+
+.vsd-results { padding-top: 26px; }
+
+.vsd-results__bar {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+  border-bottom: 1px solid var(--vs-border);
+}
+
+
+.vsd-tabs {
+  --ss-accent: var(--vs-brand);
+}
+
+.vsd-tab {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  font-size: 13px;
+}
+
+.vsd-tab__count {
+  display: inline-grid;
+  place-items: center;
+  min-width: 20px;
+  height: 18px;
+  padding: 0 6px;
+  border-radius: 999px;
+  background: var(--vs-gray-2);
+  font-family: var(--vs-mono);
+  font-size: 10px;
+}
+
+.vsd-results__actions {
+  display: inline-flex;
+  align-items: center;
+  gap: 14px;
+  padding-bottom: 6px;
+  transition: opacity 0.2s ease;
+  opacity: 0;
+}
+
+.vsd-results__actions[data-show] { opacity: 1; }
+
+.vsd-results__actions .vsd-check { align-self: center; }
+
+.vsd-results[data-compact] .vsd-results__actions {
+  display: flex;
+  justify-content: space-between;
+  padding: 12px 0 0;
+}
+
+.vsd-panels {
+  display: grid;
+  padding-top: 14px;
+}
+
+.vsd-panels > * {
+  grid-area: 1 / 1;
+  transition: opacity 0.14s ease;
+  opacity: 0;
+}
+
+/* The outgoing panel clears before the incoming one fades up */
+.vsd-panels > [data-show] {
+  opacity: 1;
+  transition: opacity 0.24s ease 0.12s;
+}
+
+.vsd-grid {
+  display: grid;
+  grid-template-columns: repeat(4, minmax(0, 1fr));
+  gap: 12px;
+}
+
+.vsd-results[data-compact] .vsd-grid {
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 10px;
+}
+
+.vsd-shot {
+  border-radius: 8px;
+  border: 1px solid var(--vs-border);
+  background: var(--vs-card);
+  overflow: hidden;
+  box-shadow: 0 2px 4px rgba(70, 67, 62, 0.1);
+}
+
+/* A skeleton at the frame's own geometry until the frame arrives */
+.vsd-shot__img {
+  aspect-ratio: 16 / 9;
+  background: var(--vs-gray-2);
+}
+
+.vsd-shot__img > svg {
+  opacity: 0;
+  transition: opacity 0.45s cubic-bezier(0.25, 0.8, 0.25, 1);
+}
+
+.vsd-shot[data-on] .vsd-shot__img > svg { opacity: 1; }
+
+.vsd-shot__meta {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  gap: 6px;
+  padding: 7px 8px;
+  opacity: 0.35;
+  transition: opacity 0.3s ease;
+}
+
+.vsd-shot[data-on] .vsd-shot__meta { opacity: 1; }
+
+.vsd-shot__chip {
+  display: inline-flex;
+  align-items: center;
+  height: 18px;
+  padding: 0 6px;
+  border-radius: 6px;
+  background: var(--vs-gray);
+  font-family: var(--vs-mono);
+  font-size: 10px;
+}
+
+.vsd-shot__time {
+  font-family: var(--vs-mono);
+  font-size: 10px;
+  color: var(--vs-text-2);
+}
+
+/* ---- Transcript ---- */
+
+.vsd-transcript {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+}
+
+.vsd-line {
+  display: grid;
+  grid-template-columns: 52px minmax(0, 1fr);
+  gap: 12px;
+  align-items: baseline;
+  padding: 9px 12px;
+  border-radius: 8px;
+  transition: background-color 0.3s ease;
+}
+
+.vsd-line[data-on] { background: var(--vs-card); }
+
+.vsd-line__time {
+  font-family: var(--vs-mono);
+  font-size: 11px;
+  color: var(--vs-text-2);
+  opacity: 0.4;
+  transition: opacity 0.3s ease;
+}
+
+.vsd-line[data-on] .vsd-line__time { opacity: 1; }
+
+.vsd-line__text {
+  font-size: 13px;
+  line-height: 1.4;
+  color: var(--vs-text);
+}
+
+/* ---- Browser downloads popover ---- */
+
+.vsd-downloads {
+  position: absolute;
+  z-index: 10;
+  top: 8px;
+  right: 10px;
+  width: 290px;
+  padding: 12px;
+  border-radius: 12px;
+  --ss-popover-bg: var(--vs-card);
+}
+
+.vsd-downloads__row {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+}
+
+.vsd-downloads__icon {
+  display: grid;
+  place-items: center;
+  flex: none;
+  width: 36px;
+  height: 36px;
+  border-radius: 8px;
+  background: var(--vs-brand-10);
+  color: var(--vs-brand);
+}
+
+.vsd-downloads__text {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+  min-width: 0;
+}
+
+.vsd-downloads__name {
+  font-size: 13px;
+  line-height: 1.3;
+  color: var(--vs-text);
+}
+
+.vsd-downloads__sub {
+  font-size: 11px;
+  line-height: 1.3;
+  color: var(--vs-text-2);
+}
+
+/* ---- The app's own header ---- */
+
+.vsd-page { max-width: 680px; }
+
+.vsd-hero {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+  padding: 2px 0 16px;
+}
+
+.vsd-hero__by {
+  font-size: 10px;
+  font-weight: 400;
+  text-transform: uppercase;
+  letter-spacing: 0.08em;
+  color: var(--vs-text-2);
+}
+
+.vsd-hero__title {
+  font-family: 'Macklin Text', 'Playfair Display', Georgia, serif;
+  font-size: 30px;
+  line-height: 1.1;
+  letter-spacing: -0.02em;
+  color: var(--vs-text);
+}
+
+.vsd-hero__sub {
+  font-size: 13px;
+  font-weight: 400;
+  color: var(--vs-text-2);
+}
+
+/* ---- The archive on the desktop: the payoff ---- */
+
+.vsd-zip {
+  will-change: transform;
+  opacity: 0;
+  transform: translateY(10px) scale(0.96);
+  transition: opacity 0.5s cubic-bezier(0.25, 0.8, 0.25, 1), transform 0.8s cubic-bezier(0.25, 0.8, 0.25, 1);
+}
+
+.vsd-zip[data-on] {
+  opacity: 1;
+  transform: none;
+}
+
+.vsd-zip__tile {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: 4px;
+  background: var(--vs-card);
+  color: var(--vs-brand);
+}
+
+.vsd-zip__count {
+  font-size: 9.5px;
+  line-height: 1.2;
+  color: var(--vs-text-2);
+}
+
+.vsd-zip-icon { width: 14px; height: 14px; }
+
+/* Buttons whose label changes keep one width, so nothing beside them moves */
+.vsd .vsd-btn--extract { min-width: 0; }
+.vsd .vsd-btn--zip { min-width: 148px; }
+
+/* Compact: the page on its own panel, no browser chrome */
+.vsd-mobile {
+  overflow: hidden;
+  border-radius: 14px;
+  border: 1px solid var(--vs-border);
+  background: var(--vs-bg);
+}
+
+.vsd-mobile > .vsd-body {
+  position: absolute;
+  inset: 0;
+}
+
+.vsd .ss-stage[data-layout='compact'] .vsd-zip__count { display: none; }
+.vsd .vsd-btn--zip { --ss-button-pad-icon: 16px; }
+.vsd-work[data-compact] .vsd-params__foot { grid-template-columns: minmax(0, 0.85fr) minmax(0, 1.5fr); }
