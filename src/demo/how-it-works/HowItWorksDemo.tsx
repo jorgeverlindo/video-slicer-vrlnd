@@ -244,9 +244,12 @@ export type HowItWorksProps = {
   onChapter?: (c: Chapter) => void
   /** The chapter the first run starts at. To jump, remount with a new key. */
   startAt?: Chapter
+  /** 'card' frames the loop at 4:3 (880×660) for 4:3 slots such as a product card. */
+  frame?: 'wide' | 'card'
 }
 
-export default function HowItWorks({ theme = 'light', onChapter, startAt = 1 }: HowItWorksProps) {
+export default function HowItWorks({ theme = 'light', onChapter, startAt = 1, frame = 'wide' }: HowItWorksProps) {
+  const card = frame === 'card'
   const chapter = useRef(onChapter)
   chapter.current = onChapter
   const start = useRef<Chapter>(startAt)
@@ -255,7 +258,7 @@ export default function HowItWorks({ theme = 'light', onChapter, startAt = 1 }: 
   return (
     <Stage<S>
       width={880}
-      height={500}
+      height={card ? 660 : 500}
       compact={{ below: 600, width: 358, height: 620 }}
       initial={initial}
       poster={poster}
