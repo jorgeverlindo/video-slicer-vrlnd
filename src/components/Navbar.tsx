@@ -27,7 +27,7 @@ export default function Navbar({ theme, onToggleTheme }: NavbarProps) {
           style={{ display: 'block', flexShrink: 0 }}
         />
         <span className="navbar-name" style={{
-          fontFamily: "'Macklin Text', 'Playfair Display', serif",
+          fontFamily: "'Macklin Text', Georgia, serif",
           fontSize: 20,
           fontWeight: 400,
           letterSpacing: '0px',

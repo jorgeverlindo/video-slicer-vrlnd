@@ -17,8 +17,8 @@
   --vs-ok: var(--success-icon, #4caf50);
   /* Icons are one opaque color: the brown, softened toward the card */
   --vs-icon: color-mix(in srgb, var(--vs-brand) 78%, var(--vs-card));
-  --vs-sans: 'Macklin Sans', 'DM Sans', system-ui, sans-serif;
-  --vs-mono: 'JetBrains Mono', 'SF Mono', ui-monospace, monospace;
+  --vs-sans: 'Macklin Sans', system-ui, sans-serif;
+  --vs-mono: 'Fragment Mono', ui-monospace, monospace;
 
   --ss-accent: var(--vs-brand);
   --ss-accent-soft: var(--vs-brand-10);
@@ -782,7 +782,7 @@
 }
 
 .vsd-hero__title {
-  font-family: 'Macklin Text', 'Playfair Display', Georgia, serif;
+  font-family: 'Macklin Text', Georgia, serif;
   font-size: 30px;
   line-height: 1.1;
   letter-spacing: -0.02em;

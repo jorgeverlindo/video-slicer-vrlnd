@@ -307,7 +307,7 @@ export default function App() {
               }}>
                 <AlertCircle size={18} />
               </div>
-              <div style={{ fontFamily: "'Macklin Text','Playfair Display',serif", fontSize: 20, fontWeight: 400, color: 'var(--text-primary)', lineHeight: 1.3, letterSpacing: '-0.02em' }}>
+              <div style={{ fontFamily: "'Macklin Text', Georgia, serif", fontSize: 20, fontWeight: 400, color: 'var(--text-primary)', lineHeight: 1.3, letterSpacing: '-0.02em' }}>
                 We can&apos;t process this video
               </div>
             </div>

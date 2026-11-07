@@ -1,36 +1,47 @@
 @import './tokens.css';
 
-/* ── Macklin Typeface ───────────────────────────────────────────────────── */
-/* Macklin Text — serif, used for headings                                  */
-@font-face {
-  font-family: 'Macklin Text';
-  src: url('/fonts/MacklinText-Regular.otf') format('opentype');
-  font-weight: 400;
-  font-style: normal;
-  font-display: swap;
-}
-@font-face {
-  font-family: 'Macklin Text';
-  src: url('/fonts/MacklinText-Light.otf') format('opentype');
-  font-weight: 300;
-  font-style: normal;
-  font-display: swap;
-}
-
-/* Macklin Sans — variable font covers all weights in one file              */
+/* ── Typefaces ──────────────────────────────────────────────────────────── */
+/* Same static files the portfolio (jorgeverlindo.design) serves from the
+   Framer CDN, which allows cross-origin loads under our COEP headers.
+   Static faces, not the variable TTF: Safari misreads that font's 1–795
+   weight axis and renders weight 300 near Hairline. Each face claims a
+   weight range so heavier requests map to Regular instead of faux bold —
+   the family has no Medium/Bold, matching the portfolio. */
 @font-face {
   font-family: 'Macklin Sans';
-  src: url('/fonts/MacklinSans-Variable.ttf') format('truetype');
-  font-weight: 100 900;
-  font-style: normal;
-  font-display: swap;
+  src: url('https://framerusercontent.com/assets/R8hgLQrdfV7W2NyqNRHcjtcQ.woff2') format('woff2');
+  font-weight: 100 399; font-style: normal; font-display: swap;
 }
 @font-face {
   font-family: 'Macklin Sans';
-  src: url('/fonts/MacklinSans-LightItalic.otf') format('opentype');
-  font-weight: 300;
-  font-style: italic;
-  font-display: swap;
+  src: url('https://framerusercontent.com/assets/Dx605dspPEoD6HBybzWhaTZusE.woff2') format('woff2');
+  font-weight: 400 900; font-style: normal; font-display: swap;
+}
+@font-face {
+  font-family: 'Macklin Sans';
+  src: url('https://framerusercontent.com/assets/IysfGkmOpOzcI9X1Fs092xOK9yI.woff2') format('woff2');
+  font-weight: 100 900; font-style: italic; font-display: swap;
+}
+@font-face {
+  font-family: 'Macklin Text';
+  src: url('https://framerusercontent.com/assets/wSxjAeY6OZtXw1rD6WXv537x6c.woff2') format('woff2');
+  font-weight: 100 399; font-style: normal; font-display: swap;
+}
+@font-face {
+  font-family: 'Macklin Text';
+  src: url('https://framerusercontent.com/assets/NX2yz2Uv7UiNIFzULtbVuKao.woff2') format('woff2');
+  font-weight: 400 900; font-style: normal; font-display: swap;
+}
+@font-face {
+  font-family: 'Macklin Text';
+  src: url('https://framerusercontent.com/assets/bcJMljQmVhbY2gywi6su1jl7Xs.woff2') format('woff2');
+  font-weight: 100 900; font-style: italic; font-display: swap;
+}
+/* Fragment Mono (OFL) — the portfolio's mono, self-hosted */
+@font-face {
+  font-family: 'Fragment Mono';
+  src: url('/fonts/FragmentMono-Regular.woff2') format('woff2');
+  font-weight: 100 900; font-style: normal; font-display: swap;
 }
 
 /* ── Base ───────────────────────────────────────────────────────────────── */
@@ -45,7 +56,7 @@ html {
 body {
   background-color: var(--app-bg);
   color: var(--text-primary);
-  font-family: 'Macklin Sans', 'DM Sans', sans-serif;
+  font-family: 'Macklin Sans', system-ui, sans-serif;
   font-size: 14px;
   line-height: 1.66;
   min-height: 100vh;
@@ -56,7 +67,7 @@ body {
 .page { width: var(--page-w); margin-left: auto; margin-right: auto; }
 
 h1 {
-  font-family: 'Macklin Text', 'Playfair Display', serif;
+  font-family: 'Macklin Text', Georgia, serif;
   font-size: 56px;
   font-weight: 400;
   line-height: 1.0;
@@ -64,7 +75,7 @@ h1 {
   color: var(--text-primary);
 }
 h2 {
-  font-family: 'Macklin Text', 'Playfair Display', serif;
+  font-family: 'Macklin Text', Georgia, serif;
   font-size: 32px;
   font-weight: 400;
   line-height: 1.2;
@@ -115,7 +126,7 @@ h2 {
 .btn {
   display: inline-flex; align-items: center; justify-content: center; gap: 6px;
   height: auto; padding: 10px 16px;
-  font-family: 'Macklin Sans', 'DM Sans', sans-serif;
+  font-family: 'Macklin Sans', system-ui, sans-serif;
   font-size: 14px; font-weight: 400;
   line-height: 1.2; letter-spacing: 0.02em; text-transform: uppercase;
   border-radius: var(--radius-btn); border: none;
@@ -148,14 +159,14 @@ h2 {
   display: flex; justify-content: space-between; align-items: center; gap: 12px;
 }
 .card-title {
-  font-family: 'Macklin Sans', 'DM Sans', sans-serif;
+  font-family: 'Macklin Sans', system-ui, sans-serif;
   font-size: 12px; font-weight: 400; text-transform: uppercase;
   letter-spacing: 0.08em; color: var(--text-secondary); line-height: 24px;
 }
 .card-meta {
   font-size: 12px; color: var(--text-secondary);
   font-variant-numeric: tabular-nums;
-  font-family: 'JetBrains Mono', 'SF Mono', monospace;
+  font-family: 'Fragment Mono', ui-monospace, monospace;
 }
 .card-body { padding: 10px 20px 20px; }
 
@@ -181,7 +192,7 @@ h2 {
 }
 .dropzone:hover .dropzone-icon, .dropzone.dragover .dropzone-icon { transform: translateY(-2px); }
 .dropzone-title {
-  font-family: 'Macklin Text', 'Playfair Display', serif; font-size: 20px; font-weight: 400;
+  font-family: 'Macklin Text', Georgia, serif; font-size: 20px; font-weight: 400;
   color: var(--text-primary); margin-bottom: 6px; letter-spacing: -0.02em;
 }
 .dropzone-hint { font-size: 14px; color: var(--text-secondary); }
@@ -220,7 +231,7 @@ input[type="number"] {
   width: 100%; height: 36px;
   background: var(--gray-100); border: 1px solid transparent;
   border-radius: var(--radius-sm); padding: 0 12px;
-  font-family: 'Roboto', sans-serif; font-size: 14px; color: var(--text-primary);
+  font-family: inherit; font-size: 14px; color: var(--text-primary);
   transition: var(--t-fast); -moz-appearance: textfield;
 }
 input[type="number"]::-webkit-outer-spin-button,
@@ -256,7 +267,7 @@ input[type="range"]::-moz-range-thumb {
 input[type="range"]:focus { outline: none; }
 input[type="range"]:focus::-webkit-slider-thumb { box-shadow: 0 0 0 4px var(--brand-18); }
 .range-value {
-  font-family: 'JetBrains Mono', 'SF Mono', monospace; font-size: 13px;
+  font-family: 'Fragment Mono', ui-monospace, monospace; font-size: 13px;
   color: var(--text-primary); min-width: 36px; text-align: right;
   font-variant-numeric: tabular-nums; font-weight: 500;
 }
@@ -269,7 +280,7 @@ input[type="range"]:focus::-webkit-slider-thumb { box-shadow: 0 0 0 4px var(--br
 }
 .progress-meta .count {
   color: var(--brand); font-weight: 500; font-variant-numeric: tabular-nums;
-  font-family: 'JetBrains Mono', 'SF Mono', monospace;
+  font-family: 'Fragment Mono', ui-monospace, monospace;
 }
 .progress-bar {
   height: 4px; background: var(--gray-150);
@@ -344,11 +355,11 @@ video {
   display: inline-flex; align-items: center; height: 22px; padding: 0 8px;
   background: var(--gray-50); color: var(--text-primary);
   font-size: 11px; font-weight: 500; border-radius: var(--radius-md);
-  font-variant-numeric: tabular-nums; font-family: 'JetBrains Mono', 'SF Mono', monospace;
+  font-variant-numeric: tabular-nums; font-family: 'Fragment Mono', ui-monospace, monospace;
 }
 .frame-time {
   font-size: 11px; color: var(--text-secondary);
-  font-variant-numeric: tabular-nums; font-family: 'JetBrains Mono', 'SF Mono', monospace;
+  font-variant-numeric: tabular-nums; font-family: 'Fragment Mono', ui-monospace, monospace;
 }
 .frame-dl-btn {
   position: absolute; top: 8px; right: 8px;
@@ -380,7 +391,7 @@ video {
 .solution code {
   display: block; background: rgb(36, 34, 32); color: var(--code-accent);
   padding: 10px 14px; border-radius: var(--radius-sm);
-  font-family: 'JetBrains Mono', 'SF Mono', Menlo, monospace; font-size: 12px;
+  font-family: 'Fragment Mono', ui-monospace, monospace; font-size: 12px;
   overflow-x: auto; margin: 8px 0; line-height: 1.5;
 }
 
@@ -484,7 +495,7 @@ footer {
   border-bottom: 1px solid #e4e0da;
 }
 .sb-doc-title {
-  font-family: 'Macklin Text', 'Playfair Display', serif;
+  font-family: 'Macklin Text', Georgia, serif;
   font-size: 18px;
   color: #1e1e1e;
   letter-spacing: -0.02em;
@@ -492,7 +503,7 @@ footer {
 .sb-doc-meta {
   font-size: 11px;
   color: #999;
-  font-family: 'JetBrains Mono', 'SF Mono', monospace;
+  font-family: 'Fragment Mono', ui-monospace, monospace;
 }
 
 .sb-grid {
@@ -528,7 +539,7 @@ footer {
 .vsthumb-time {
   font-size: 10px;
   color: #999;
-  font-family: 'JetBrains Mono', 'SF Mono', monospace;
+  font-family: 'Fragment Mono', ui-monospace, monospace;
   font-variant-numeric: tabular-nums;
 }
 .vsthumb-img {
@@ -545,7 +556,7 @@ footer {
   border: none;
   background: transparent;
   resize: none;
-  font-family: 'Macklin Sans', 'DM Sans', sans-serif;
+  font-family: 'Macklin Sans', system-ui, sans-serif;
   font-size: 12px;
   font-weight: 300;
   line-height: 1.45;
@@ -559,7 +570,7 @@ footer {
   width: 100%;
   border: none;
   background: transparent;
-  font-family: 'Macklin Sans', 'DM Sans', sans-serif;
+  font-family: 'Macklin Sans', system-ui, sans-serif;
   font-size: 11px;
   font-weight: 300;
   font-style: italic;
@@ -586,7 +597,7 @@ footer {
   min-width: 0;
   height: 36px;
   padding: 0 12px;
-  font-family: 'Macklin Sans', 'DM Sans', sans-serif;
+  font-family: 'Macklin Sans', system-ui, sans-serif;
   font-size: 13px;
   font-weight: 300;
   background: var(--gray-100);
@@ -722,12 +733,12 @@ footer {
 
 .hiw-head { display: flex; justify-content: space-between; align-items: flex-start; gap: 16px; }
 .hiw-eyebrow {
-  font-family: 'Macklin Sans', 'DM Sans', sans-serif;
+  font-family: 'Macklin Sans', system-ui, sans-serif;
   font-size: 12px; font-weight: 300; text-transform: uppercase;
   letter-spacing: 0.08em; color: var(--text-secondary); margin-bottom: 6px;
 }
 .hiw-title {
-  font-family: 'Macklin Text', 'Playfair Display', serif;
+  font-family: 'Macklin Text', Georgia, serif;
   font-size: 24px; font-weight: 400; line-height: 1.25; letter-spacing: -0.02em;
 }
 .hiw-close {
@@ -752,7 +763,7 @@ footer {
 .hiw-step[data-on] { background: var(--brand); color: var(--app-bg); }
 .hiw-step__n {
   display: grid; place-items: center; width: 22px; height: 22px; border-radius: 50%;
-  font-size: 11px; font-family: 'JetBrains Mono', 'SF Mono', monospace;
+  font-size: 11px; font-family: 'Fragment Mono', ui-monospace, monospace;
   background: var(--white); color: var(--brand);
 }
 

@@ -272,7 +272,7 @@ export default function ResultsArea({
                   <span style={{
                     marginLeft: 'auto',
                     fontSize: 12, color: 'var(--text-secondary)',
-                    fontFamily: 'JetBrains Mono, SF Mono, monospace',
+                    fontFamily: "'Fragment Mono', ui-monospace, monospace",
                     fontVariantNumeric: 'tabular-nums',
                   }}>
                     {transcriptProgress}%
@@ -325,7 +325,7 @@ export default function ResultsArea({
                       }}>
                         {/* Timecode */}
                         <span style={{
-                          fontFamily: 'JetBrains Mono, SF Mono, monospace',
+                          fontFamily: "'Fragment Mono', ui-monospace, monospace",
                           fontSize: 11,
                           color: 'var(--text-placeholder)',
                           fontVariantNumeric: 'tabular-nums',
@@ -339,7 +339,7 @@ export default function ResultsArea({
                         <span style={{
                           fontSize: 20,
                           lineHeight: 1.3,
-                          fontFamily: "'Macklin Sans', 'DM Sans', sans-serif",
+                          fontFamily: "'Macklin Sans', system-ui, sans-serif",
                           fontWeight: 300,
                           color: 'var(--text-primary)',
                         }}>
@@ -350,7 +350,7 @@ export default function ResultsArea({
                   : (
                     <p style={{
                       fontSize: 20, lineHeight: 1.3,
-                      fontFamily: "'Macklin Sans', 'DM Sans', sans-serif",
+                      fontFamily: "'Macklin Sans', system-ui, sans-serif",
                       fontWeight: 300, color: 'var(--text-primary)',
                     }}>
                       {transcriptResult.text}

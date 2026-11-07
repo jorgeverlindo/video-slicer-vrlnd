@@ -1,15 +1,16 @@
-# Macklin Typeface — Font Files
+# Fonts
 
-Drop your licensed Macklin font files here with these exact names:
+## Macklin Text / Macklin Sans
+Not stored here. `src/styles/index.css` loads the same static woff2 files the
+portfolio (jorgeverlindo.design) publishes on the Framer CDN, so every deploy
+— including the ones Vercel builds from GitHub — gets the real typeface.
+The licensed source files stay out of the repo (see `.gitignore`).
 
-## Macklin Text (Serif — headings)
-- `MacklinText-Regular.woff2` + `MacklinText-Regular.woff`
-- `MacklinText-Light.woff2`   + `MacklinText-Light.woff`
+If a font is ever replaced in the Framer project, its CDN URL changes: copy
+the new `framerusercontent.com/assets/…woff2` URLs from the portfolio's
+`@font-face` rules into `src/styles/index.css` and `public/og.html`.
 
-## Macklin Sans (Geometric sans — body/UI)
-- `MacklinSans-Regular.woff2`      + `MacklinSans-Regular.woff`
-- `MacklinSans-Light.woff2`        + `MacklinSans-Light.woff`
-- `MacklinSans-LightItalic.woff2`  + `MacklinSans-LightItalic.woff`
-
-> If your files have different names, update the @font-face declarations in
-> `src/styles/index.css` to match.
+## Fragment Mono
+`FragmentMono-Regular.woff2` — latin subset, self-hosted. Copyright 2022 The
+Fragment Mono Project Authors, licensed under the SIL Open Font License 1.1:
+https://openfontlicense.org

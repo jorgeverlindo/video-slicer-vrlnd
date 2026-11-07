@@ -284,7 +284,7 @@ export default function Workspace({
                   <span style={{
                     fontSize: 11, textTransform: 'none', letterSpacing: 0,
                     color: 'var(--text-placeholder)',
-                    fontFamily: 'JetBrains Mono, SF Mono, monospace',
+                    fontFamily: "'Fragment Mono', ui-monospace, monospace",
                     fontVariantNumeric: 'tabular-nums',
                   }}>
                     {markedFrames.length} mark{markedFrames.length !== 1 ? 's' : ''}
@@ -327,14 +327,14 @@ export default function Workspace({
                       <div style={{ flex: 1, minWidth: 0 }}>
                         <div style={{
                           fontSize: 10, color: 'var(--text-placeholder)',
-                          fontFamily: 'JetBrains Mono, SF Mono, monospace',
+                          fontFamily: "'Fragment Mono', ui-monospace, monospace",
                           letterSpacing: 0.3,
                         }}>
                           #{String(idx + 1).padStart(2, '0')}
                         </div>
                         <div style={{
                           fontSize: 11, color: 'var(--text-primary)', fontWeight: 500,
-                          fontFamily: 'JetBrains Mono, SF Mono, monospace',
+                          fontFamily: "'Fragment Mono', ui-monospace, monospace",
                           fontVariantNumeric: 'tabular-nums',
                           overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap',
                         }}>
@@ -455,7 +455,7 @@ export default function Workspace({
                         }} />
                         <span style={{
                           fontSize: 14, fontWeight: 300,
-                          fontFamily: "'Macklin Sans', 'DM Sans', sans-serif",
+                          fontFamily: "'Macklin Sans', system-ui, sans-serif",
                           color: 'var(--text-secondary)',
                           whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis',
                         }}>
