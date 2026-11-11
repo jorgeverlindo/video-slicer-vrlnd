@@ -782,11 +782,11 @@ footer {
 }
 
 /* ── Entrance (first load only) ───────────────────────────────────────────
-   main.tsx puts .intro on <html> before the first render and takes it off
-   once the sequence is over, so going back to the upload screen does not
-   replay it. Each element comes into focus (blur + scale + short rise),
-   staggered top to bottom. Only opacity/transform/filter move: no layout
-   shift.                                                                  */
+   main.tsx puts .intro on <html> before the first render, adds .intro-run
+   once the home's fonts are in (capped), and takes both off when the
+   sequence is over, so going back to the upload screen does not replay it.
+   Each element comes into focus (blur + scale + short rise), staggered top
+   to bottom. Only opacity/transform/filter move: no layout shift.         */
 :root {
   --intro-ease: cubic-bezier(0.22, 1, 0.36, 1);
   --intro-dur: 1000ms;
@@ -796,14 +796,22 @@ footer {
 .intro :is(.navbar, .hero-eyebrow, .hero h1, .hero-row, .dropzone, .url-input-wrap, #root > footer) {
   animation: intro-focus var(--intro-dur) var(--intro-ease) both;
   animation-delay: calc(var(--intro-lead) + var(--i, 0) * var(--intro-step));
+  /* Layers exist before frame one: Safari otherwise creates them as the
+     blur starts and can flash the element, worst on the large dropzone. */
+  will-change: opacity, transform, filter;
 }
-.intro .navbar         { --i: 0; animation-name: intro-fade; }
+.intro .navbar         { --i: 0; animation-name: intro-fade; will-change: opacity; }
 .intro .hero-eyebrow   { --i: 1; }
 .intro .hero h1        { --i: 2; }
 .intro .hero-row       { --i: 3; }
 .intro .dropzone       { --i: 4; }
 .intro .url-input-wrap { --i: 5; }
-.intro #root > footer  { --i: 7; animation-name: intro-fade; }
+.intro #root > footer  { --i: 7; animation-name: intro-fade; will-change: opacity; }
+
+/* A cursor resting mid-screen on load sits over the dropzone while it rises
+   and scales under it; keep hover still until the entrance is over. */
+.intro .dropzone:hover:not(.dragover) { border-color: var(--gray-border); }
+.intro .dropzone:hover:not(.dragover) .dropzone-icon { transform: none; }
 
 @keyframes intro-focus {
   from { opacity: 0; transform: translate3d(0, 12px, 0) scale(0.97); filter: blur(10px); }
@@ -815,5 +823,12 @@ footer {
   .intro :is(.navbar, .hero-eyebrow, .hero h1, .hero-row, .dropzone, .url-input-wrap, #root > footer) {
     animation: intro-fade 300ms ease both;
     animation-delay: 0ms;
+    will-change: opacity;
   }
+}
+
+/* Held on the first (hidden) keyframe until main.tsx adds .intro-run.
+   Last on purpose: the animation shorthands above reset play-state. */
+.intro:not(.intro-run) :is(.navbar, .hero-eyebrow, .hero h1, .hero-row, .dropzone, .url-input-wrap, #root > footer) {
+  animation-play-state: paused;
 }

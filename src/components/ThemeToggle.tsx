@@ -20,7 +20,10 @@ export function useTheme() {
     return getSystemTheme()
   }
 
-  const [theme, setTheme] = useState<'light' | 'dark'>('light')
+  // index.html already stamped the theme before first paint
+  const [theme, setTheme] = useState<'light' | 'dark'>(() =>
+    document.documentElement.getAttribute(ATTR) === 'dark' ? 'dark' : 'light'
+  )
   const initialized = useRef(false)
 
   useEffect(() => {
