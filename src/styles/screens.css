@@ -13,8 +13,12 @@
   height: var(--topbar-h); padding: 0 var(--space-xl);
   max-width: var(--page-max); width: 100%; margin: 0 auto;
 }
-.brand { display: inline-flex; align-items: center; gap: var(--space-s); text-decoration: none; color: var(--c-text-primary); justify-self: start; border-radius: var(--radius-s); }
-.brand__by { color: var(--c-text-subtle); }
+.brand { display: inline-flex; align-items: center; gap: var(--space-s); justify-self: start; }
+.brand__home { display: inline-flex; align-items: center; gap: var(--space-s); text-decoration: none; color: var(--c-text-primary); border-radius: var(--radius-s); }
+.brand__by { color: var(--c-text-subtle); text-decoration: none; border-radius: var(--radius-s); transition: color var(--dur-press) ease; }
+.brand__by span { text-decoration: underline; text-decoration-color: transparent; text-underline-offset: var(--underline-offset); transition: text-decoration-color var(--dur-press) ease; }
+.brand__by:hover { color: var(--c-text-primary); }
+.brand__by:hover span { text-decoration-color: currentColor; }
 .topbar__right { justify-self: end; display: flex; align-items: center; gap: var(--space-s); }
 
 .steps ol { display: flex; align-items: center; gap: var(--space-xs); }

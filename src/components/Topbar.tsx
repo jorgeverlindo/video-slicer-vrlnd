@@ -11,6 +11,8 @@ type Props = {
   /** Steps the user can jump to without losing work */
   canGoTo: (s: Step) => boolean
   onGoTo: (s: Step) => void
+  /** Back to Home (drops the current video) */
+  onHome: () => void
 }
 
 const STEPS: { n: Step; label: string }[] = [
@@ -19,15 +21,19 @@ const STEPS: { n: Step; label: string }[] = [
   { n: 3, label: 'Result' },
 ]
 
-export default function Topbar({ theme, onToggleTheme, step, busy, canGoTo, onGoTo }: Props) {
+export default function Topbar({ theme, onToggleTheme, step, busy, canGoTo, onGoTo, onHome }: Props) {
   const dark = theme === 'dark'
   return (
     <header className="topbar enter" style={{ '--i': 0 } as React.CSSProperties}>
-      <a className="brand" href="https://jorgeverlindo.design" aria-label="Video Slicer by Jorge Verlindo, opens the portfolio">
-        <JorgeLogo busy={busy} />
-        <span className="brand__name t-title-s">Video Slicer</span>
-        <span className="brand__by t-caption">by Jorge Verlindo</span>
-      </a>
+      {/* Two destinations: the product name goes Home, the byline to the portfolio */}
+      <div className="brand">
+        <a className="brand__home" href="/" aria-label="Video Slicer, back to home"
+          onClick={(e) => { if (e.metaKey || e.ctrlKey || e.shiftKey || e.button !== 0) return; e.preventDefault(); onHome() }}>
+          <JorgeLogo busy={busy} />
+          <span className="brand__name t-title-s">Video Slicer</span>
+        </a>
+        <a className="brand__by t-caption" href="https://jorgeverlindo.design">by <span>Jorge Verlindo</span></a>
+      </div>
 
       <nav className="steps" aria-label="Progress">
         <ol>

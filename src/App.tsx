@@ -220,6 +220,7 @@ export default function App() {
         theme={theme} onToggleTheme={toggleTheme} step={step} busy={busy}
         canGoTo={(s) => (s === 2 && stage === 'result') || (s === 3 && stage === 'slice' && frames.length > 0 && !extracting)}
         onGoTo={(s) => setView(s === 3 ? 'result' : 'slice')}
+        onHome={resetVideo}
       />
       <main className={`main${shown.current.enter ? ' stage-in' : ''}`} key={stage} data-stage={stage}>
         {stage === 'home' && (
