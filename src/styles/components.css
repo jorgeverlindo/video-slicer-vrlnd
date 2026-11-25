@@ -77,6 +77,26 @@
 .seg__opt input:focus-visible + label { box-shadow: var(--focus-ring); }
 .seg__opt input:disabled + label { opacity: 0.45; cursor: default; }
 
+/* ── Tooltip ── above its anchor; shows after a short hover intent, at once
+   on keyboard focus, and leaves faster than it came. */
+.tip {
+  position: absolute; bottom: calc(100% + var(--space-xs)); left: 50%; z-index: 2;
+  padding: var(--space-2xs) var(--space-xs); border-radius: var(--radius-s);
+  background: var(--c-tip-bg); color: var(--c-tip-text); box-shadow: var(--shadow-card);
+  font: var(--weight-regular) var(--fs-caption)/var(--lh-caption) var(--font-sans); white-space: nowrap;
+  pointer-events: none; opacity: 0; translate: var(--tip-x, -50%) var(--space-2xs);
+  transition: opacity var(--dur-press) var(--ease-exit), translate var(--dur-press) var(--ease-exit);
+}
+.seg__opt:hover .tip, .seg__opt input:focus-visible ~ .tip {
+  opacity: 1; translate: var(--tip-x, -50%) 0;
+  transition: opacity var(--dur-tooltip) var(--ease-out) var(--tip-delay), translate var(--dur-tooltip) var(--ease-out) var(--tip-delay);
+}
+.seg__opt input:focus-visible ~ .tip { transition-delay: 0ms; }
+/* End options align to their outer edge so the tip stays inside the control's width */
+.seg__opt:first-child .tip { left: 0; --tip-x: 0%; }
+.seg__opt:last-child .tip { left: auto; right: 0; --tip-x: 0%; }
+@media (hover: none) { .tip { display: none; } } /* touch: no hover to reveal it */
+
 /* ── Toggle ── */
 .toggle { position: relative; display: inline-flex; flex: none; width: var(--size-toggle-w); height: var(--size-toggle-h); }
 .toggle input { position: absolute; inset: 0; opacity: 0; margin: 0; cursor: pointer; z-index: 1; }

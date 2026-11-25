@@ -70,23 +70,24 @@ function fmtBytes(b: number): string {
 }
 
 /** Real per-frame size: encodes the current frame at the chosen quality. */
-function useFrameBytes(videoRef: React.RefObject<HTMLVideoElement>, quality: number, enabled: boolean) {
-  const [bytes, setBytes] = useState<number | null>(null)
+/** JPEG size of one frame at every quality step, measured on the current frame */
+function useFrameBytes(videoRef: React.RefObject<HTMLVideoElement>, enabled: boolean) {
+  const [bytes, setBytes] = useState<Record<string, number>>({})
   useEffect(() => {
     const v = videoRef.current
-    if (!v || !enabled) { setBytes(null); return }
+    if (!v || !enabled) { setBytes({}); return }
     let alive = true
     const measure = () => {
       if (!v.videoWidth) return
       const c = document.createElement('canvas')
       c.width = v.videoWidth; c.height = v.videoHeight
       c.getContext('2d')!.drawImage(v, 0, 0)
-      c.toBlob((b) => { if (alive && b) setBytes(b.size) }, 'image/jpeg', quality)
+      QUALITY.forEach((o) => c.toBlob((b) => { if (alive && b) setBytes((m) => ({ ...m, [o.value]: b.size })) }, 'image/jpeg', o.q))
     }
     if (v.readyState >= 2) measure()
     v.addEventListener('loadeddata', measure)
     return () => { alive = false; v.removeEventListener('loadeddata', measure) }
-  }, [videoRef, quality, enabled])
+  }, [videoRef, enabled])
   return bytes
 }
 
@@ -94,7 +95,7 @@ export default function Slice(p: Props) {
   const native = p.videoMode === 'native' && p.duration > 0
   const ready = p.duration > 0
   const thumbs = useThumbs(native ? p.file : null, p.duration)
-  const frameBytes = useFrameBytes(p.videoRef, p.params.quality, native)
+  const frameBytes = useFrameBytes(p.videoRef, native)
 
   const markers = useMemo<Marker[]>(() => {
     if (!ready) return []
@@ -196,7 +197,7 @@ function ConverterState({ msg, ready }: { msg: string | null; ready: boolean }) 
 }
 
 // ── Settings panel (S2, S2b, S2c, S2d, S3) ──────────────────────────────────
-function SettingsPanel(p: Props & { native: boolean; ready: boolean; frameBytes: number | null }) {
+function SettingsPanel(p: Props & { native: boolean; ready: boolean; frameBytes: Record<string, number> }) {
   const { params, onParams } = p
   const mode = params.mode
   const chunks = p.transcript.result?.chunks ?? []
@@ -216,7 +217,6 @@ function SettingsPanel(p: Props & { native: boolean; ready: boolean; frameBytes:
   const hint = !p.ready ? 'Available once the converter is ready'
     : mode === 'storyboard' && total ? `${total} shot${total === 1 ? '' : 's'}, ready to export as PDF`
     : params.uniqueOnly && total ? `Scans ${total} moments and keeps the ones that change`
-    : p.frameBytes && total ? `About ${fmtBytes(p.frameBytes * total)} as a ZIP`
     : null
 
   const canExtract = p.ready && total > 0
@@ -289,8 +289,8 @@ function SettingsPanel(p: Props & { native: boolean; ready: boolean; frameBytes:
           <span className="field__label">Image quality</span>
           <Segmented label="Image quality" value={qualityKey(params.quality)}
             onChange={(k) => onParams({ ...params, quality: QUALITY.find((o) => o.value === k)!.q })}
-            options={QUALITY.map((o) => ({ value: o.value, label: o.label }))} />
-          <span className="field__hint">{p.frameBytes ? `JPEG, about ${fmtBytes(p.frameBytes)} per frame` : 'JPEG'}</span>
+            options={QUALITY.map((o) => ({ value: o.value, label: o.label,
+              tip: p.frameBytes[o.value] ? `JPEG, about ${fmtBytes(p.frameBytes[o.value])} per frame` : 'JPEG' }))} />
         </div>
 
       </div>

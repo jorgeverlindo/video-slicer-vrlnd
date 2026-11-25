@@ -49,6 +49,8 @@
 
   /* Elevation */
   --shadow-card:   0 1px 2px rgb(70 67 62 / 0.08), 0 8px 24px rgb(70 67 62 / 0.08);
+  --c-tip-bg:      rgb(36 34 32);   /* tooltip: inverse of the surface */
+  --c-tip-text:    rgb(245 242 237);
   --shadow-float:  0 2px 6px rgb(70 67 62 / 0.10), 0 24px 56px rgb(70 67 62 / 0.18);
   --shadow-lift:   0 4px 10px rgb(70 67 62 / 0.14), 0 36px 72px rgb(70 67 62 / 0.26);
   --focus-ring:    0 0 0 3px var(--c-brand-35);
@@ -131,6 +133,8 @@
   --c-media:           rgb(12 10 9);
 
   --shadow-card:   0 1px 2px rgb(0 0 0 / 0.25), 0 8px 24px rgb(0 0 0 / 0.25);
+  --c-tip-bg:      rgb(245 242 237);
+  --c-tip-text:    rgb(36 34 32);
   --shadow-float:  0 2px 6px rgb(0 0 0 / 0.30), 0 24px 56px rgb(0 0 0 / 0.45);
   --shadow-lift:   0 4px 10px rgb(0 0 0 / 0.40), 0 36px 72px rgb(0 0 0 / 0.60);
 

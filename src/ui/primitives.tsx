@@ -5,7 +5,8 @@ import { ErrorFilled, Information, CheckmarkFilled, ChevronDown, Checkmark } fro
 export function Segmented<T extends string>({
   options, value, onChange, label, disabled,
 }: {
-  options: { value: T; label: ReactNode; disabled?: boolean }[]
+  /** tip: short tooltip on hover and keyboard focus, also read as the option's description */
+  options: { value: T; label: ReactNode; disabled?: boolean; tip?: string }[]
   value: T | null
   onChange: (v: T) => void
   label: string
@@ -22,8 +23,10 @@ export function Segmented<T extends string>({
               type="radio" id={id} name={name} value={o.value}
               checked={value === o.value} disabled={disabled || o.disabled}
               onChange={() => onChange(o.value)}
+              aria-describedby={o.tip ? `${id}-tip` : undefined}
             />
             <label htmlFor={id}>{o.label}</label>
+            {o.tip && <span className="tip" role="tooltip" id={`${id}-tip`}>{o.tip}</span>}
           </div>
         )
       })}

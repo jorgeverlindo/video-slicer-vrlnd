@@ -26,6 +26,7 @@
   --dur-spin:      800ms;  /* spinner revolution (linear) */
   --dur-land:      900ms;  /* home entrance: copy and stills settle at this moment */
   --dur-settle:    360ms;  /* thrown card coming to rest */
+  --tip-delay:     300ms;  /* hover intent before a tooltip shows */
 
   /* Choreography */
   --stagger:       50ms;   /* siblings in one sequence */
