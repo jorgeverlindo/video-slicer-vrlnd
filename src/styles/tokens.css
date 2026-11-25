@@ -34,6 +34,7 @@
   --c-ink:             rgb(0 0 0 / 0.85);
   --c-ink-secondary:   rgb(0 0 0 / 0.55);
   --c-ink-muted:       rgb(0 0 0 / 0.40);
+  --c-ink-wash:        rgb(0 0 0 / 0.04);
   --c-success:         rgb(27 94 32);
   --c-danger:          rgb(168 44 32);
   --c-danger-10:       rgb(168 44 32 / 0.08);
@@ -51,6 +52,7 @@
   --shadow-float:  0 2px 6px rgb(70 67 62 / 0.10), 0 24px 56px rgb(70 67 62 / 0.18);
   --shadow-lift:   0 4px 10px rgb(70 67 62 / 0.14), 0 36px 72px rgb(70 67 62 / 0.26);
   --focus-ring:    0 0 0 3px var(--c-brand-35);
+  --halo-w:        4px;   /* focused text field glow */
 
   /* ── Legacy aliases — used only by the How it works demo kit (src/demo) ── */
   --brand: var(--c-brand);
@@ -115,6 +117,7 @@
   --c-ink:             rgb(0 0 0 / 0.85);
   --c-ink-secondary:   rgb(0 0 0 / 0.55);
   --c-ink-muted:       rgb(0 0 0 / 0.40);
+  --c-ink-wash:        rgb(0 0 0 / 0.04);
   --c-success:         rgb(76 175 80);
   --c-danger:          rgb(236 128 112);
   --c-danger-10:       rgb(236 128 112 / 0.10);

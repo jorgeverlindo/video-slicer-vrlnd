@@ -42,6 +42,7 @@
   --deal-swing: -16deg;   /* hero stills: where the deal arc starts */
   --lift-scale: 1.04;     /* picked-up card */
   --menu-scale: 0.96;     /* menus grow from their trigger */
+  --icon-lean: -45deg;    /* field icon on focus (link hooks in) */
 }
 
 @keyframes fade-in   { from { opacity: 0; } }
@@ -67,6 +68,6 @@
     --rise-s: 0px; --rise-m: 0px; --rise-l: 0px; --blur-in: 0px;
     --stagger: 0ms; --stagger-tight: 0ms;
     --dur-entrance: 200ms; --dur-modal: 200ms;
-    --deal-swing: 0deg; --lift-scale: 1; --menu-scale: 1; --stagger-deal: 60ms; --dur-spring-deal: 200ms; --dur-settle: 0ms;
+    --deal-swing: 0deg; --lift-scale: 1; --menu-scale: 1; --icon-lean: 0deg; --stagger-deal: 60ms; --dur-spring-deal: 200ms; --dur-settle: 0ms;
   }
 }

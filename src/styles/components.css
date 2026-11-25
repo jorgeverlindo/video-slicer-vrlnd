@@ -3,10 +3,15 @@
    Frame tile, Transcript line, Pin, Chip, plus field / alert / progress.   */
 
 /* Focus — one ring everywhere */
-:where(button, a, input, select, textarea, [tabindex]):focus-visible {
+/* Focus — one ring, for keyboard-operated controls only.
+   Text entry (input, textarea) is excluded: those show focus through their
+   container (.field__control, .stepper), never a rectangle inside a pill.
+   tabindex="-1" targets (menus, panels focused by script) never ring. */
+:where(button, a, select, [tabindex]:not([tabindex="-1"])):focus-visible {
   outline: none;
   box-shadow: var(--focus-ring);
 }
+:where(input, textarea, [tabindex="-1"]):focus { outline: none; }
 
 /* ── Button ── */
 .btn {
@@ -132,7 +137,10 @@
 .stepper {
   display: inline-flex; align-items: center; gap: var(--space-2xs);
   padding: var(--space-2xs); border-radius: var(--radius-full); background: var(--c-gray-100);
+  transition: box-shadow var(--dur-dropdown) var(--ease-out);
 }
+/* Typing a value: the pill answers, same language as the text field */
+.stepper:has(.stepper__value:focus) { box-shadow: 0 0 0 var(--stroke-s) var(--c-brand), 0 0 0 var(--halo-w) var(--c-brand-10); }
 .stepper .icon-btn { background: var(--c-surface-raised); color: var(--c-text-primary); }
 .stepper .icon-btn:hover:not(:disabled) { background: var(--c-surface-raised); color: var(--c-brand); }
 .stepper__value {
@@ -142,7 +150,6 @@
   -moz-appearance: textfield;
 }
 .stepper__value::-webkit-outer-spin-button, .stepper__value::-webkit-inner-spin-button { -webkit-appearance: none; margin: 0; }
-.stepper__value:focus-visible { border-radius: var(--radius-s); }
 
 /* ── Field ── */
 .field { display: grid; gap: var(--space-xs); }
@@ -153,9 +160,18 @@
   min-height: var(--size-target-l); padding: 0 var(--space-m);
   border: var(--stroke-s) solid var(--c-border); border-radius: var(--radius-full);
   background: var(--c-gray-100); color: var(--c-text-subtle);
-  transition: border-color var(--dur-press) ease, background-color var(--dur-press) ease;
+  transition: border-color var(--dur-press) ease, background-color var(--dur-press) ease,
+              box-shadow var(--dur-dropdown) var(--ease-out);
 }
-.field__control:focus-within { border-color: var(--c-brand); background: var(--c-surface); }
+.field__control > svg { flex: none; transition: color var(--dur-dropdown) ease, transform var(--dur-dropdown) var(--ease-out); }
+/* Focus: the pill itself answers — brand edge, a soft halo that grows in,
+   and the leading icon turns brand and leans in, as if hooking the link */
+.field__control:focus-within {
+  border-color: var(--c-brand); background: var(--c-surface);
+  box-shadow: 0 0 0 var(--halo-w) var(--c-brand-10);
+}
+.field__control:focus-within > svg { color: var(--c-brand); transform: rotate(var(--icon-lean)); }
+.field__control[data-state="error"]:focus-within { box-shadow: 0 0 0 var(--halo-w) var(--c-danger-10); }
 .field__control[data-state="error"] { border-color: var(--c-danger); }
 .field__control input {
   flex: 1; min-width: 0; height: var(--size-target); border: none; background: transparent; outline: none;

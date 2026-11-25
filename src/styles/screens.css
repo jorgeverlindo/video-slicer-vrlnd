@@ -359,7 +359,8 @@ html.intro-run .still { --deal-at: calc(var(--lead) + var(--deal-lead) + var(--d
 .vsthumb-tx { font: var(--weight-regular) var(--fs-body-m)/var(--lh-body-m) var(--font-sans); color: var(--c-ink); }
 .vsthumb-desc { font: var(--weight-light) var(--fs-caption)/var(--lh-caption) var(--font-sans); color: var(--c-ink-secondary); }
 .vsthumb-tx::placeholder, .vsthumb-desc::placeholder { color: var(--c-ink-muted); }
-.vsthumb-tx:focus-visible, .vsthumb-desc:focus-visible { box-shadow: 0 0 0 var(--stroke-l) var(--c-brand-35); }
+.vsthumb-tx, .vsthumb-desc { transition: background-color var(--dur-press) ease; }
+.vsthumb-tx:focus, .vsthumb-desc:focus { background: var(--c-ink-wash); } /* editing on paper: a wash, no frame */
 .sb-doc-footer { margin-top: var(--space-xl); padding-top: var(--space-s); border-top: var(--stroke-s) solid var(--c-ink-muted); }
 .sb-footnote-text { font: var(--weight-light) var(--fs-caption)/var(--lh-caption) var(--font-sans); color: var(--c-ink-secondary); }
 .result__panel > .alert { margin-bottom: var(--space-m); }
