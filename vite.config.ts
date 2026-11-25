@@ -24,6 +24,8 @@ export default defineConfig({
       'Cross-Origin-Embedder-Policy': 'require-corp',
     },
   },
+  // Speech worker (lib/asr.worker.ts) imports transformers, which code-splits
+  worker: { format: 'es' },
   optimizeDeps: {
     exclude: ['@ffmpeg/ffmpeg', '@ffmpeg/util', '@huggingface/transformers'],
   },

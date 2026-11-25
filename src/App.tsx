@@ -68,23 +68,35 @@ export default function App() {
     })
   }, [])
 
-  // Start once the video is readable, if the person opted in (home or panel)
-  const txWanted = tx.enabled && !!file && duration > 0
+  // Opting in on Home (switch + language, then the video) is the whole
+  // decision, so that run starts by itself once the video is readable.
+  // In the panel the switch only opens the setting: the run waits for an
+  // explicit Start, so the language can be picked first (a switch that kicks
+  // off a long, heavy job is an action, not a setting).
+  const videoReady = !!file && duration > 0
   useEffect(() => {
-    if (txWanted && tx.status === 'idle') runTranscription(file!, tx.lang)
+    if (videoReady && tx.enabled && tx.status === 'idle') runTranscription(file!, tx.lang)
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [txWanted])
+  }, [videoReady])
 
   const setTranscribe = useCallback((on: boolean) => {
-    if (!on) { txRunRef.current++; setTx((p) => ({ ...p, enabled: false, ...TX_IDLE })); return }
-    setTx((p) => ({ ...p, enabled: true }))
+    if (!on) txRunRef.current++ // cancels a run in flight
+    setTx((p) => ({ ...p, enabled: on, ...TX_IDLE }))
+  }, [])
+
+  const startTranscription = useCallback(() => {
     if (file && duration > 0) runTranscription(file, tx.lang)
   }, [file, duration, tx.lang, runTranscription])
 
+  // A new language invalidates what's there: a run in flight restarts in it,
+  // a finished transcript goes back to waiting for Start.
   const setLang = useCallback((lang: TranscriptLang) => {
-    setTx((p) => ({ ...p, lang }))
-    if (tx.enabled && file && duration > 0 && lang !== tx.lang) runTranscription(file, lang)
-  }, [tx.enabled, tx.lang, file, duration, runTranscription])
+    if (lang === tx.lang) return
+    const running = tx.enabled && !['idle', 'done', 'error'].includes(tx.status)
+    if (running && file && duration > 0) { runTranscription(file, lang); return }
+    txRunRef.current++
+    setTx((p) => ({ ...p, lang, ...TX_IDLE }))
+  }, [tx.enabled, tx.lang, tx.status, file, duration, runTranscription])
 
   // ── Load video ────────────────────────────────────────────────────────────
   const resetVideo = useCallback(() => {
@@ -213,7 +225,7 @@ export default function App() {
             file={file!} duration={duration} videoMode={videoMode} converterMsg={converterMsg} videoRef={videoRef}
             params={params} onParams={setParams} aspectRatio={aspectRatio} onAspectRatio={setAspectRatio}
             marked={marked} onMark={onMark} onUnmark={onUnmark}
-            transcript={tx} onTranscribe={setTranscribe} onLang={setLang}
+            transcript={tx} onTranscribe={setTranscribe} onLang={setLang} onStartTranscript={startTranscription}
             onReplace={resetVideo} onExtract={handleExtract} extracting={extracting} progress={progress}
             frames={frames} onCancel={cancel} error={error}
           />

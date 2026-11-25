@@ -37,6 +37,7 @@ type Props = {
   transcript: Transcript
   onTranscribe: (on: boolean) => void
   onLang: (l: TranscriptLang) => void
+  onStartTranscript: () => void
   onReplace: () => void
   onExtract: () => void
   extracting: boolean
@@ -303,7 +304,7 @@ function SettingsPanel(p: Props & { native: boolean; ready: boolean; frameBytes:
             <Select label="Transcript language" value={p.transcript.lang} onChange={(v) => p.onLang(v as TranscriptLang)}
               disabled={!p.transcript.enabled} options={LANGUAGES} />
           </div>
-          {p.transcript.enabled && <TranscriptStatusLine t={p.transcript} />}
+          {p.transcript.enabled && <TranscriptStatusLine t={p.transcript} onStart={p.onStartTranscript} />}
         </div>
       </div>
 
@@ -317,11 +318,26 @@ function SettingsPanel(p: Props & { native: boolean; ready: boolean; frameBytes:
   )
 }
 
-function TranscriptStatusLine({ t }: { t: Transcript }) {
-  if (t.status === 'idle' && t.lang === 'pt') return <p className="field__hint">Portuguese needs a one-time 460 MB download. After that it loads instantly.</p>
+function TranscriptStatusLine({ t, onStart }: { t: Transcript; onStart: () => void }) {
+  // Waiting for Start: say what it will cost in the chosen language, then act
+  if (t.status === 'idle') {
+    const hint = t.lang === 'pt'
+      ? 'Portuguese needs a one-time 460 MB download. After that it loads instantly.'
+      : LANGUAGES.find((l) => l.value === t.lang)?.hint
+    return (
+      <div className="tx-start">
+        {hint && <p className="field__hint">{hint}</p>}
+        <button type="button" className="btn btn--secondary" onClick={onStart}>Start transcription</button>
+      </div>
+    )
+  }
   if (t.status === 'done') return <p className="field__hint">Transcript ready, {t.result?.chunks?.length ?? 0} lines.</p>
-  if (t.status === 'error') return <p className="field__error">{t.msg || "We couldn't transcribe this video."}</p>
-  if (t.status === 'idle') return null
+  if (t.status === 'error') return (
+    <div className="tx-start">
+      <p className="field__error">{t.msg || "We couldn't transcribe this video."}</p>
+      <button type="button" className="btn btn--secondary" onClick={onStart}>Try again</button>
+    </div>
+  )
   const pct = t.progress
   return (
     <div className="tx-line" role="status">

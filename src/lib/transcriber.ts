@@ -1,30 +1,40 @@
-import { pipeline, env } from '@huggingface/transformers'
-import type { TranscriptResult, TranscriptStatus, TranscriptLang, OnStatusFn } from './transcript-types'
+import type { TranscriptResult, TranscriptLang, OnStatusFn } from './transcript-types'
 import { TRANSCRIPT_LANGUAGES } from './transcript-types'
+import type { AsrRequest, AsrReply } from './asr.worker'
 
 // Re-export so existing imports from './transcriber' continue to work
 export type { TranscriptChunk, TranscriptResult, TranscriptStatus, TranscriptLang, OnStatusFn } from './transcript-types'
 export { TRANSCRIPT_LANGUAGES, transcriptToMarkdown } from './transcript-types'
 
-env.allowLocalModels = false
+// ── Worker ────────────────────────────────────────────────────────────────
+// Inference runs in asr.worker.ts so the page stays responsive. Audio is
+// decoded here (AudioContext and the FFmpeg instance live on the page) and
+// handed over as raw samples.
+let worker: Worker | null = null
+let nextId = 0
+type NewRequest = AsrRequest extends infer R ? R extends AsrRequest ? Omit<R, 'id'> : never : never
+const waiting = new Map<number, { onReply: (m: AsrReply) => void }>()
 
-// ── Model cache ───────────────────────────────────────────────────────────
-let asrTiny:  Awaited<ReturnType<typeof pipeline>> | null = null
-let asrSmall: Awaited<ReturnType<typeof pipeline>> | null = null
+function getWorker(): Worker {
+  if (worker) return worker
+  worker = new Worker(new URL('./asr.worker.ts', import.meta.url), { type: 'module' })
+  worker.onmessage = (e: MessageEvent<AsrReply>) => waiting.get(e.data.id)?.onReply(e.data)
+  return worker
+}
 
-function makeProgressCallback(onStatus: OnStatusFn, status: TranscriptStatus, label: string) {
-  const fileSizes = new Map<string, number>()
-  const fileLoaded = new Map<string, number>()
-  return (p: any) => {
-    if (p.status === 'progress' && p.file) {
-      if (p.total)  fileSizes.set(p.file, p.total)
-      if (p.loaded) fileLoaded.set(p.file, p.loaded)
-      const total  = [...fileSizes.values()].reduce((a, b) => a + b, 0)
-      const loaded = [...fileLoaded.values()].reduce((a, b) => a + b, 0)
-      const pct = total > 0 ? Math.round((loaded / total) * 100) : null
-      onStatus(status, label, pct)
-    }
-  }
+function ask<T extends AsrReply['type']>(req: NewRequest, done: T, onProgress?: (pct: number | null) => void, transfer: Transferable[] = []): Promise<Extract<AsrReply, { type: T }>> {
+  const id = ++nextId
+  return new Promise((resolve, reject) => {
+    waiting.set(id, {
+      onReply: (m) => {
+        if (m.type === 'progress') { onProgress?.(m.pct); return }
+        waiting.delete(id)
+        if (m.type === 'error') reject(new Error(m.message))
+        else if (m.type === done) resolve(m as Extract<AsrReply, { type: T }>)
+      },
+    })
+    getWorker().postMessage({ ...req, id } as AsrRequest, transfer)
+  })
 }
 
 async function extractSamples(
@@ -65,48 +75,23 @@ export async function transcribeFile(
 
   const langMeta = TRANSCRIPT_LANGUAGES.find(l => l.code === language)!
   const useSmall = langMeta.model === 'small'
+  const model = useSmall ? 'Xenova/whisper-small' : 'Xenova/whisper-tiny'
+  const status = useSmall ? 'loading-model-multilingual' : 'loading-model'
+  const label = useSmall ? `Loading ${langMeta.flag} ${langMeta.label} model…` : 'Downloading model…'
 
-  if (useSmall) {
-    // ── Non-English: load whisper-small ────────────────────────────────────
-    if (asrSmall) {
-      onStatus('model-cached', 'Enhanced model ready')
-    } else {
-      onStatus('loading-model-multilingual', `Loading ${langMeta.flag} ${langMeta.label} model…`, null)
-      asrSmall = await pipeline(
-        'automatic-speech-recognition',
-        'Xenova/whisper-small',
-        { dtype: 'fp32', progress_callback: makeProgressCallback(onStatus, 'loading-model-multilingual', `Loading ${langMeta.flag} ${langMeta.label} model…`) },
-      )
-    }
-  } else {
-    // ── English: load whisper-tiny ─────────────────────────────────────────
-    if (asrTiny) {
-      onStatus('model-cached', 'Model ready')
-    } else {
-      onStatus('loading-model', 'Downloading model…', null)
-      asrTiny = await pipeline(
-        'automatic-speech-recognition',
-        'Xenova/whisper-tiny',
-        { dtype: 'fp32', progress_callback: makeProgressCallback(onStatus, 'loading-model', 'Downloading model…') },
-      )
-    }
-  }
-
-  const asr = useSmall ? asrSmall! : asrTiny!
+  // Load (or reuse) the model in the worker
+  onStatus(status, label, null)
+  const { cached } = await ask({ type: 'load', model }, 'loaded', (pct) => onStatus(status, label, pct))
+  if (cached) onStatus('model-cached', useSmall ? 'Enhanced model ready' : 'Model ready')
 
   // Decode audio
   onStatus('decoding-audio', 'Decoding audio…')
   const samples = await extractSamples(file, ffmpegInstance, ffmpegInputName)
 
-  // Transcribe
+  // Transcribe, off the main thread
   onStatus('transcribing', `Transcribing in ${langMeta.label}…`)
-  const result = await (asr as any)(samples, {
-    task: 'transcribe',
-    language,
-    chunk_length_s: 30,
-    stride_length_s: 5,
-    return_timestamps: true,
-  })
+  const own = samples.slice() // detach a copy so it can be transferred, not cloned
+  const { result } = await ask({ type: 'run', model, samples: own, language }, 'result', undefined, [own.buffer])
 
   onStatus('done')
   return { ...(result as TranscriptResult), language: langMeta.label.toLowerCase() }
