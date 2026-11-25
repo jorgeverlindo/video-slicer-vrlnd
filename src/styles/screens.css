@@ -37,18 +37,25 @@
 .steps__item[data-state="current"] .steps__n { background: var(--c-brand); border-color: var(--c-brand); color: var(--c-on-brand); }
 .steps__item[data-state="done"] .steps__n { background: var(--c-gray-150); border-color: transparent; color: var(--c-text-primary); }
 
-/* ── Entrance (M1) — first load of a session only ──
-   Order: topbar fades → headline lines focus-in → lede → actions → transcribe
-   → the three stills deal in. Logo builds in parallel (JorgeLogo). */
+/* ── Entrance (M1) — topbar, first load of a session only ──
+   Logo builds in parallel (JorgeLogo). The home's own entrance is below. */
 html.intro:not(.intro-run) .enter { opacity: 0; }
-html.intro-run .enter {
-  animation: focus-in var(--dur-entrance) var(--ease-out) both;
-  animation-delay: calc(var(--lead) + var(--i, 0) * var(--stagger));
+html.intro-run .topbar.enter { animation: fade-in var(--dur-entrance) var(--ease-out) both; animation-delay: var(--lead); }
+
+/* ── Home choreography — every visit ──
+   One clock for both sides. The copy (left) and the stills (right) leave
+   together, a --stagger-deal apart, and each piece shortens its run by its
+   own delay, so the whole home settles on one beat: --lead + --dur-land.
+   Same timing, different motion: the copy focuses in (rise + blur, ease-out),
+   the stills are dealt on an arc and land. On the first run both wait,
+   hidden, for the faces to load (main.tsx), then start together. */
+.home .enter {
+  --home-dur: calc(var(--dur-land) - var(--i, 0) * var(--stagger-deal));
+  animation: focus-in var(--home-dur) var(--ease-out) backwards;
+  animation-delay: calc(var(--lead) + var(--i, 0) * var(--stagger-deal));
 }
-html.intro-run .topbar.enter { animation-name: fade-in; }
-/* Stills wait for the copy on the first run; on later visits they enter alone */
+html.intro:not(.intro-run) .home .enter,
 html.intro:not(.intro-run) .still { animation: none; opacity: 0; }
-html.intro-run .still { --deal-at: calc(var(--lead) + var(--deal-lead) + var(--d, 0) * var(--stagger-deal)); }
 
 /* ── S1 Home ── */
 .home {

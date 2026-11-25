@@ -43,15 +43,15 @@ export default function Home({ theme, onFile, transcribe, onTranscribe, lang, on
 
       <div className="home__copy">
         <h1 className="t-display-xl home__title">
-          <span className="enter" style={{ '--i': 1 } as React.CSSProperties}>Drop a video.</span>
-          <span className="enter" style={{ '--i': 2 } as React.CSSProperties}>Keep every frame.</span>
+          <span className="enter" style={{ '--i': 0 } as React.CSSProperties}>Drop a video.</span>
+          <span className="enter" style={{ '--i': 1 } as React.CSSProperties}>Keep every frame.</span>
         </h1>
-        <p className="t-body-l c-subtle home__lede enter" style={{ '--i': 3 } as React.CSSProperties}>
+        <p className="t-body-l c-subtle home__lede enter" style={{ '--i': 2 } as React.CSSProperties}>
           Pull stills, a transcript or a storyboard out of any clip, right in your browser.
           The file never leaves your machine.
         </p>
 
-        <div className="enter" style={{ '--i': 4 } as React.CSSProperties}>
+        <div className="enter" style={{ '--i': 3 } as React.CSSProperties}>
           {linkOpen
             ? <PasteLink onFile={onFile} onClose={() => setLinkOpen(false)} onBusy={onBusy} />
             : (
@@ -74,7 +74,7 @@ export default function Home({ theme, onFile, transcribe, onTranscribe, lang, on
             : !linkOpen && <p className="t-caption c-subtle home__note">Works with MP4, MOV, WebM and MKV</p>}
         </div>
 
-        <div className="home__transcribe enter" style={{ '--i': 5 } as React.CSSProperties}>
+        <div className="home__transcribe enter" style={{ '--i': 4 } as React.CSSProperties}>
           <Toggle checked={transcribe} onChange={onTranscribe} label="Also transcribe the audio" />
           <span className="t-label-m">Also transcribe the audio</span>
           <Select label="Transcript language" value={lang} onChange={(v) => onLang(v as TranscriptLang)} disabled={!transcribe}

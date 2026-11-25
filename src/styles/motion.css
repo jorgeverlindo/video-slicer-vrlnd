@@ -24,15 +24,14 @@
   --dur-entrance:  640ms;  /* first-run hero, once per session */
   --dur-logo-build: 1400ms;/* Jorge Logo entrance — Framer default */
   --dur-spin:      800ms;  /* spinner revolution (linear) */
-  --dur-land:      900ms;  /* hero deal: every card touches down at this moment */
+  --dur-land:      900ms;  /* home entrance: copy and stills settle at this moment */
   --dur-settle:    360ms;  /* thrown card coming to rest */
 
   /* Choreography */
   --stagger:       50ms;   /* siblings in one sequence */
   --stagger-tight: 30ms;   /* long lists (result tiles) */
   --lead:          120ms;  /* first step after the page paints */
-  --stagger-deal:  60ms;   /* hero stills leave a beat apart, land together */
-  --deal-lead:     200ms;  /* stills follow the copy (4 × stagger) */
+  --stagger-deal:  60ms;   /* home pieces leave a beat apart, settle together */
 
   /* Distance */
   --rise-s: 8px;
