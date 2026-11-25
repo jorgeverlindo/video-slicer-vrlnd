@@ -145,6 +145,9 @@ html.intro:not(.intro-run) .still { animation: none; opacity: 0; }
 /* Theme wiring: same timing as the page's own colour change */
 .still__img--dark { opacity: 0; }
 [framestack-theme="dark"] .still__img--dark { opacity: 1; }
+/* Live loop over the dark still: fades in once frames are actually playing */
+.still__video { position: absolute; inset: 0; width: 100%; height: 100%; object-fit: cover; pointer-events: none; opacity: 0; transition: opacity var(--dur-modal) var(--ease-out); }
+.still__video[data-playing] { opacity: 1; }
 [framestack-theme="dark"] .still__img--light { opacity: 0; }
 .still figcaption { display: flex; justify-content: space-between; padding: var(--space-xs) var(--space-2xs) var(--space-2xs); color: var(--c-text-subtle); }
 /* Descending diagonal, left → right: each card covers only the floor of the

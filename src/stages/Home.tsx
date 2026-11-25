@@ -82,7 +82,7 @@ export default function Home({ theme, onFile, transcribe, onTranscribe, lang, on
         </div>
       </div>
 
-      <HeroStills />
+      <HeroStills theme={theme} />
 
       <div className="home__drop" aria-hidden={!isDragActive}>
         <Upload size={32} />
@@ -113,7 +113,11 @@ const THROW_MS = 120    // release momentum: project velocity this far ahead
 
 type Drag = { i: number; sx: number; sy: number; ox: number; oy: number; lx: number; ly: number; lt: number; vx: number; vy: number }
 
-function HeroStills() {
+function HeroStills({ theme }: { theme: 'light' | 'dark' }) {
+  // Dark theme: each card loops its moment of the source clip (public/hero/
+  // trajectory-0N.mp4, ~140 KB each, end crossfaded into start). The dark
+  // still stays underneath as the poster. Light theme and reduced motion: stills.
+  const live = theme === 'dark' && !prefersReducedMotion()
   const box = useRef<HTMLDivElement>(null)
   const cards = useRef<(HTMLElement | null)[]>([])
   const pos = useRef(TRAJECTORY.map(() => ({ x: 0, y: 0 })))
@@ -177,6 +181,11 @@ function HeroStills() {
           <span className="still__media">
             <img className="still__img still__img--light" src={`/hero/trajectory-${c.n}-light.webp`} alt="" width={960} height={540} decoding="async" draggable={false} />
             <img className="still__img still__img--dark" src={`/hero/trajectory-${c.n}-dark.webp`} alt="" width={960} height={540} decoding="async" draggable={false} />
+            {live && (
+              <video className="still__video" src={`/hero/trajectory-${c.n}.mp4`} width={960} height={540}
+                muted loop autoPlay playsInline preload="auto" disablePictureInPicture
+                onPlaying={(e) => { e.currentTarget.dataset.playing = '' }} />
+            )}
           </span>
           <figcaption>
             <span className="t-mono-s">{c.label}</span>
