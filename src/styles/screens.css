@@ -152,6 +152,22 @@ html.intro:not(.intro-run) .still { animation: none; opacity: 0; }
 /* ── S2/S3/S4: Slice ── */
 .slice { display: grid; grid-template-columns: minmax(0, 1fr) var(--panel-w); gap: var(--space-xl); align-items: start; padding-top: var(--space-xs); }
 .slice__media { display: grid; gap: var(--space-m); min-width: 0; }
+/* Slice entrance (arriving from Home or Replace video): one clock, like the
+   home. The media column builds top-down — file row, player, filmstrip —
+   rising a beat apart; the panel slides in from its side on the player's
+   beat. Same timing, different motion per side. */
+.main[data-stage="slice"].stage-in { animation: none; }
+.main[data-stage="slice"].stage-in .slice__media > * {
+  --rise: var(--rise-m);
+  animation: rise-in var(--dur-entrance) var(--ease-out) backwards;
+  animation-delay: calc(var(--i, 0) * var(--stagger-deal));
+}
+.main[data-stage="slice"].stage-in .slice__media > :nth-child(2) { --i: 1; }
+.main[data-stage="slice"].stage-in .slice__media > :nth-child(3) { --i: 2; }
+.main[data-stage="slice"].stage-in .panel {
+  animation: slide-in var(--dur-entrance) var(--ease-out) backwards;
+  animation-delay: var(--stagger-deal);
+}
 
 .file-row { display: flex; align-items: center; gap: var(--space-xs); min-height: var(--size-target); color: var(--c-text-subtle); }
 .file-row__name { flex: 1; min-width: 0; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; color: var(--c-text-primary); }

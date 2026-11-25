@@ -56,6 +56,12 @@
 @keyframes spin      { to   { transform: rotate(360deg); } }
 @keyframes unclip    { from { overflow: hidden; } to { overflow: visible; } } /* discrete: flips at the end */
 
+/* Stage swap (View Transitions): the old page fades out, faster than the
+   new one arrives; the new page is live underneath and runs its own entrance */
+::view-transition-old(root) { animation: fade-out var(--dur-tooltip) var(--ease-exit) both; }
+::view-transition-new(root) { animation: none; }
+@keyframes slide-in  { from { opacity: 0; transform: translateX(var(--rise-l)); } }
+
 /* Utility: stage change (M8). Incoming stage only; outgoing is instant. */
 .stage-in { animation: rise-in var(--dur-modal) var(--ease-out) backwards; } /* backwards: no lingering transform, or position:fixed children (selection bar) anchor to <main> */
 

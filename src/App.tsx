@@ -1,4 +1,5 @@
 import { useRef, useState, useCallback, useEffect } from 'react'
+import { flushSync } from 'react-dom'
 import Topbar, { type Step } from './components/Topbar'
 import { useTheme } from './components/ThemeToggle'
 import Home from './stages/Home'
@@ -110,8 +111,13 @@ export default function App() {
   }, [])
 
   const handleFile = useCallback((f: File) => {
-    resetVideo()
-    setFile(f)
+    // Home → Slice: Home fades out over the new stage while the new stage
+    // deals itself in (screens.css, "Slice entrance"). View Transitions where
+    // supported; elsewhere the new stage's own entrance carries it.
+    const swap = () => { resetVideo(); setFile(f) }
+    const vt = (document as Document & { startViewTransition?: (cb: () => void) => unknown }).startViewTransition
+    if (vt && !matchMedia('(prefers-reduced-motion: reduce)').matches) vt.call(document, () => flushSync(swap))
+    else swap()
     const probe = document.createElement('video')
     probe.preload = 'metadata'
     const url = URL.createObjectURL(f)
