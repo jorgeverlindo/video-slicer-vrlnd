@@ -112,14 +112,10 @@ const LEAN_MAX = 6      // deg
 const THROW_MS = 120    // release momentum: project velocity this far ahead
 
 // Live hero (dark theme only; light and reduced motion keep the stills).
-// Two variants, picked with ?hero=relay|loops while we compare:
-//  · loops — each card loops its own ~1s moment (trajectory-0N.mp4)
-//  · relay — one clip (trajectory-full.mp4) across the pile, each card its
-//    own stretch at normal speed: #004 frame 0 → 1, #009 1 → 2, #013 2 → 3,
-//    each starting the moment its card leaves. Cards fade 0 → 100 % over
-//    their flight and land --relay-step apart; each freezes on its end.
-type HeroMode = 'relay' | 'loops'
-const heroMode = (): HeroMode => (new URLSearchParams(location.search).get('hero') === 'loops' ? 'loops' : 'relay')
+// One clip (public/hero/trajectory-full.mp4) across the pile, each card its
+// own stretch at normal speed: #004 frame 0 → 1, #009 1 → 2, #013 2 → 3,
+// each starting the moment its card leaves. Cards fade 0 → 100 % over their
+// flight and land --relay-step apart; each freezes on its end, once.
 const RELAY = [0, 1.0, 2.5, 4.0]   // s: card i shows RELAY[i] → RELAY[i+1]
 const FRAME = 1 / 48               // s: half a frame, to land inside one
 
@@ -168,15 +164,13 @@ function useRelay(
 type Drag = { i: number; sx: number; sy: number; ox: number; oy: number; lx: number; ly: number; lt: number; vx: number; vy: number }
 
 function HeroStills({ theme }: { theme: 'light' | 'dark' }) {
-  // Dark theme: each card loops its moment of the source clip (public/hero/
-  // trajectory-0N.mp4, ~140 KB each, end crossfaded into start). The dark
-  // still stays underneath as the poster. Light theme and reduced motion: stills.
+  // Dark theme: the clip relays across the cards (useRelay); the dark still
+  // stays underneath as the poster. Light theme and reduced motion: stills.
   const live = theme === 'dark' && !prefersReducedMotion()
-  const mode = heroMode()
   const videos = useRef<(HTMLVideoElement | null)[]>([])
   const box = useRef<HTMLDivElement>(null)
   const cards = useRef<(HTMLElement | null)[]>([])
-  useRelay(videos, cards, live && mode === 'relay')
+  useRelay(videos, cards, live)
   const pos = useRef(TRAJECTORY.map(() => ({ x: 0, y: 0 })))
   const drag = useRef<Drag | null>(null)
   const [stack, setStack] = useState<number[]>(TRAJECTORY.map((_, i) => i)) // last = on top
@@ -226,7 +220,7 @@ function HeroStills({ theme }: { theme: 'light' | 'dark' }) {
   }
 
   return (
-    <div className="stills" ref={box} aria-hidden="true" data-relay={(live && mode === 'relay') || undefined}>
+    <div className="stills" ref={box} aria-hidden="true" data-relay={live || undefined}>
       {TRAJECTORY.map((c, i) => (
         <figure
           key={c.n} ref={(el) => { cards.current[i] = el }}
@@ -238,12 +232,7 @@ function HeroStills({ theme }: { theme: 'light' | 'dark' }) {
           <span className="still__media">
             <img className="still__img still__img--light" src={`/hero/trajectory-${c.n}-light.webp`} alt="" width={960} height={540} decoding="async" draggable={false} />
             <img className="still__img still__img--dark" src={`/hero/trajectory-${c.n}-dark.webp`} alt="" width={960} height={540} decoding="async" draggable={false} />
-            {live && mode === 'loops' && (
-              <video className="still__video" src={`/hero/trajectory-${c.n}.mp4`} width={960} height={540}
-                muted loop autoPlay playsInline preload="auto" disablePictureInPicture
-                onPlaying={(e) => { e.currentTarget.dataset.playing = '' }} />
-            )}
-            {live && mode === 'relay' && (
+            {live && (
               <video className="still__video" ref={(el) => { videos.current[i] = el }} src="/hero/trajectory-full.mp4" width={960} height={540}
                 muted playsInline preload="auto" disablePictureInPicture
                 // Reveal on the first decoded frame, whatever brings it: card #004
