@@ -89,11 +89,11 @@ html.intro-run .still { --deal-at: calc(var(--lead) + var(--deal-lead) + var(--d
 .paste__go { min-width: var(--size-paste-btn); }
 
 /* Hero stills — the trajectory.
-   Entrance (every visit to Home): dealt like playing cards. All three swing
-   on one shared pivot below the table (--pivot), so each travels an arc, one
-   per beat, on a spring: thrown in, a touch past its spot, settling back.
-   The fade is a separate, short ease-out, so opacity never overshoots.
-   Each card's pivot offset is from its own centre, in container units.
+   Entrance (every visit to Home): dealt from far, on one shared pivot below
+   the table (--pivot), so each travels a long arc. They leave a beat apart
+   but every card's flight is shortened by its delay, so all three touch down
+   at the same moment (--dur-land). Landing: they arrive lifted (scale) and settle onto the table on a critically damped curve, no bounce.
+   The fade is a separate short ease-out, so opacity never overshoots.
    Drag: individual translate/rotate/scale properties, so they compose with
    the entrance's transform — a card can be grabbed mid-flight. */
 .stills { position: relative; isolation: isolate; height: var(--stills-h); container-type: size; } /* own layer: the pile stacks inside it, the copy stays above */
@@ -105,9 +105,10 @@ html.intro-run .still { --deal-at: calc(var(--lead) + var(--deal-lead) + var(--d
   cursor: grab; touch-action: none; user-select: none; -webkit-user-select: none;
   --pivot-x: 50cqw; --pivot-y: 200cqh; /* far below: a long, low arc */
   --ox: calc(var(--pivot-x) - var(--card-cx)); --oy: calc(var(--pivot-y) - var(--card-top) - 50%);
-  animation: still-deal var(--dur-spring-deal) var(--ease-spring-deal) backwards,
-             fade-in var(--dur-dropdown) var(--ease-out) backwards;
+  animation: still-deal var(--deal-dur) var(--ease-land) backwards,
+             fade-in var(--dur-modal) var(--ease-out) backwards;
   animation-delay: var(--deal-at), var(--deal-at);
+  --deal-dur: calc(var(--dur-land) - var(--d, 0) * var(--stagger-deal));
   --deal-at: calc(var(--lead) + var(--d, 0) * var(--stagger-deal));
   /* settle after a throw; also the return on double-click */
   transition: translate var(--dur-settle) var(--ease-out), rotate var(--dur-settle) var(--ease-out),
@@ -120,8 +121,12 @@ html.intro-run .still { --deal-at: calc(var(--lead) + var(--deal-lead) + var(--d
   transition: rotate var(--dur-press) var(--ease-out), scale var(--dur-press) var(--ease-out), box-shadow var(--dur-press) ease;
 }
 @keyframes still-deal {
-  from { transform: translate(var(--ox), var(--oy)) rotate(var(--deal-swing)) translate(calc(var(--ox) * -1), calc(var(--oy) * -1)) rotate(0deg); }
-  to   { transform: translate(var(--ox), var(--oy)) rotate(0deg) translate(calc(var(--ox) * -1), calc(var(--oy) * -1)) rotate(var(--tilt)); }
+  from {
+    transform: translate(var(--ox), var(--oy)) rotate(var(--deal-swing)) translate(calc(var(--ox) * -1), calc(var(--oy) * -1)) rotate(0deg) scale(var(--land-scale));
+  }
+  to {
+    transform: translate(var(--ox), var(--oy)) rotate(0deg) translate(calc(var(--ox) * -1), calc(var(--oy) * -1)) rotate(var(--tilt)) scale(1);
+  }
 }
 @media (pointer: coarse) { .still { touch-action: pan-y; } } /* page still scrolls on phones */
 .still__media { position: relative; display: block; aspect-ratio: 16 / 9; overflow: hidden; border-radius: var(--radius-m); background: var(--c-gray-100); }
