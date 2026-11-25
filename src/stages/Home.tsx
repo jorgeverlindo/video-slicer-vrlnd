@@ -114,18 +114,14 @@ const THROW_MS = 120    // release momentum: project velocity this far ahead
 // Live hero (dark theme only; light and reduced motion keep the stills).
 // Two variants, picked with ?hero=relay|loops while we compare:
 //  · loops — each card loops its own ~1s moment (trajectory-0N.mp4)
-//  · relay — one clip (trajectory-full.mp4) builds the pile, card by card,
-//    one beat apart (--relay-step): #004 deals in holding its frame; a beat
-//    later #009 deals in already playing from that frame, its stretch sped
-//    up to fill the beat; then #013 the same, to the end. Then all freeze.
+//  · relay — one clip (trajectory-full.mp4) across the pile: #004 deals in
+//    holding its frame, #009 plays frame 1 → 2 and #013 frame 2 → 3, each at
+//    normal speed from the moment its card leaves. The cards land
+//    --relay-step apart; each freezes on the end of its stretch.
 type HeroMode = 'relay' | 'loops'
 const heroMode = (): HeroMode => (new URLSearchParams(location.search).get('hero') === 'loops' ? 'loops' : 'relay')
 const RELAY = [0, 1.0, 2.5, 4.0]   // s: card i shows RELAY[i] → RELAY[i+1]
 const FRAME = 1 / 48               // s: half a frame, to land inside one
-const cssMs = (name: string, fallback: number) => {
-  const n = parseFloat(getComputedStyle(document.documentElement).getPropertyValue(name))
-  return Number.isFinite(n) ? n : fallback
-}
 
 function useRelay(
   videos: React.MutableRefObject<(HTMLVideoElement | null)[]>,
@@ -135,42 +131,39 @@ function useRelay(
   useEffect(() => {
     if (!on) return
     const vs = videos.current, els = cards.current
-    let raf = 0, timer = 0, alive = true
-    const step = cssMs('--relay-step', 480)
-    // #004 waits on its own frame (the end of its moment); the others on
-    // their first frame, hidden until dealt
-    vs.forEach((v, i) => { if (v) { v.pause(); v.currentTime = i === 0 ? RELAY[1] - FRAME : RELAY[i] } })
-    const deal = (i: number) => { const el = els[i]; if (el) el.dataset.go = '' }
-    // Card i deals in and plays its stretch; when it reaches its end it
-    // freezes there and hands on to the next card
-    const play = (i: number) => {
-      if (!alive || i >= vs.length) return
-      deal(i)
+    let raf = 0, alive = true
+    // #004 holds its own frame (the end of its moment); the others wait on
+    // their first frame
+    vs.forEach((v, i) => { if (v) { v.pause(); v.playbackRate = 1; v.currentTime = i === 0 ? RELAY[1] - FRAME : RELAY[i] } })
+    // Each later card starts its stretch, at normal speed, the moment its
+    // own deal leaves (CSS staggers the deals by --relay-step), and freezes
+    // on the last frame of its stretch
+    const roll = (i: number) => {
       const v = vs[i]
-      // The stretch fills exactly one beat, so the next card follows at once
-      if (v) v.playbackRate = (RELAY[i + 1] - RELAY[i]) / (step / 1000)
-      v?.play().catch(() => {})
+      if (!alive || !v) return
+      v.play().catch(() => {})
       const watch = () => {
-        if (!alive || !v) return
-        if (v.currentTime >= RELAY[i + 1] - FRAME || v.ended) {
-          v.pause(); v.currentTime = Math.min(RELAY[i + 1], v.duration || RELAY[i + 1]) - FRAME
-          play(i + 1)
-          return
-        }
-        raf = requestAnimationFrame(watch)
+        if (!alive) return
+        if (v.currentTime >= RELAY[i + 1] - FRAME || v.ended) { v.pause(); v.currentTime = Math.min(RELAY[i + 1], v.duration || RELAY[i + 1]) - FRAME; return }
+        requestAnimationFrame(watch)
       }
-      raf = requestAnimationFrame(watch)
+      requestAnimationFrame(watch)
     }
     const html = document.documentElement
     const start = () => {
       if (!alive) return
       // First visit: the deal is held until the faces load (main.tsx)
       if (html.classList.contains('intro') && !html.classList.contains('intro-run')) { raf = requestAnimationFrame(start); return }
-      deal(0)
-      timer = window.setTimeout(() => play(1), cssMs('--lead', 120) + step)
+      // Follow each card's own deal animation, so video and flight share a clock
+      els.forEach((el, i) => {
+        if (i === 0) return
+        const deal = el?.getAnimations().find((a) => (a as CSSAnimation).animationName === 'still-deal')
+        const wait = deal ? Math.max(0, -Number(deal.currentTime ?? 0) + (Number(deal.effect?.getTiming().delay) || 0)) : 0
+        window.setTimeout(() => roll(i), wait)
+      })
     }
     raf = requestAnimationFrame(start)
-    return () => { alive = false; cancelAnimationFrame(raf); clearTimeout(timer); vs.forEach((v) => v?.pause()) }
+    return () => { alive = false; cancelAnimationFrame(raf); vs.forEach((v) => v?.pause()) }
   }, [videos, cards, on])
 }
 
