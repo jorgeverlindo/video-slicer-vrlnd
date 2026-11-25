@@ -249,14 +249,13 @@ html.intro:not(.intro-run) .still { animation: none; opacity: 0; }
 .panel {
   position: sticky; top: var(--space-m);
   display: flex; flex-direction: column;
-  min-height: calc(100vh - var(--topbar-h) - var(--space-2xl));
-  padding: var(--space-xl) var(--space-l) var(--space-l);
+  padding: var(--space-xl) var(--space-l) var(--space-l); /* hugs its content: every gap is the panel's own */
   border: var(--stroke-s) solid var(--c-border); border-radius: var(--radius-xl); background: var(--c-surface);
 }
 .panel__body { flex: 1; display: flex; flex-direction: column; gap: var(--space-l); }
 .panel__head { display: grid; gap: var(--space-xs); }
 .panel__rows { display: flex; flex-direction: column; gap: var(--space-l); }
-.panel__action { margin-top: auto; display: grid; gap: var(--space-xs); justify-items: center; text-align: center; }
+.panel__action { display: grid; gap: var(--space-xs); justify-items: center; text-align: center; }
 
 .marks__head { display: flex; justify-content: space-between; align-items: baseline; }
 .marks { display: flex; flex-direction: column; gap: var(--space-xs); max-height: var(--marks-max-h); overflow: auto; }
