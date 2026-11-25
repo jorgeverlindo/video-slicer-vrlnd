@@ -1,6 +1,7 @@
 import { useEffect, useMemo, useState } from 'react'
-import { FileDown, Loader2 } from 'lucide-react'
+import { DocumentPdf, Add } from '@carbon/icons-react'
 import type { Frame, AspectRatio } from '../lib/extractor'
+import { Segmented, Spinner, Alert } from '../ui/primitives'
 import { ASPECT_RATIO_H, fmtTimecode } from '../lib/extractor'
 import type { TranscriptChunk } from '../lib/transcript-types'
 
@@ -9,7 +10,10 @@ type Props = {
   chunks: (TranscriptChunk | undefined)[]
   filename: string
   aspectRatio?: AspectRatio
+  onAspectRatio: (r: AspectRatio) => void
 }
+
+const RATIOS: AspectRatio[] = ['16:9', '1:1', '4:5', '9:16']
 
 // ── PDF export ────────────────────────────────────────────────────────────────
 
@@ -182,12 +186,13 @@ function ThumbnailCard({ frame, index, chunk, editedText, onTextChange, note, on
 
 // ── View ──────────────────────────────────────────────────────────────────────
 
-export default function StoryboardView({ frames, chunks, filename, aspectRatio = '16:9' }: Props) {
+export default function StoryboardView({ frames, chunks, filename, aspectRatio = '16:9', onAspectRatio }: Props) {
   const initialTexts = useMemo(() => frames.map((_, i) => chunks[i]?.text.trim() ?? ''), [frames, chunks])
   const [editedChunks, setEditedChunks] = useState<string[]>(initialTexts)
   const [notes, setNotes] = useState<string[]>(() => frames.map(() => ''))
   const [footerNote, setFooterNote] = useState('')
   const [exporting, setExporting] = useState(false)
+  const [exportError, setExportError] = useState<string | null>(null)
 
   // Re-seed edits when frames are regenerated
   useEffect(() => {
@@ -200,8 +205,11 @@ export default function StoryboardView({ frames, chunks, filename, aspectRatio =
   async function handleExport() {
     if (exporting) return
     setExporting(true)
+    setExportError(null)
     try {
       await exportPdf(frames, chunks, notes, editedChunks, footerNote, filename, aspectRatio)
+    } catch (e) {
+      setExportError(e instanceof Error ? e.message : String(e))
     } finally {
       setExporting(false)
     }
@@ -209,26 +217,28 @@ export default function StoryboardView({ frames, chunks, filename, aspectRatio =
 
   return (
     <div>
-      {/* Toolbar — footnote field + export */}
-      <div style={{ display: 'flex', gap: 10, alignItems: 'center', marginBottom: 16 }}>
-        <input
-          className="sb-footnote-input"
-          value={footerNote}
-          onChange={(e) => setFooterNote(e.target.value)}
-          placeholder="Fill in your footnote here"
-        />
-        <button className="btn btn-primary" onClick={handleExport} disabled={exporting} style={{ flexShrink: 0 }}>
-          {exporting
-            ? <Loader2 size={15} style={{ animation: 'spin 1s linear infinite' }} />
-            : <FileDown size={15} />}
+      {/* Toolbar — ratio, footnote, export (S7) */}
+      <div className="sb-toolbar">
+        <div className="sb-toolbar__ratio">
+          <Segmented label="Frame ratio" value={aspectRatio} onChange={onAspectRatio}
+            options={RATIOS.map((r) => ({ value: r, label: r }))} />
+        </div>
+        <div className="field__control sb-toolbar__note">
+          <Add size={16} aria-hidden="true" />
+          <input value={footerNote} onChange={(e) => setFooterNote(e.target.value)}
+            placeholder="Add a footnote for every page" aria-label="Footnote for every page" />
+        </div>
+        <button type="button" className="btn btn--secondary btn--l" onClick={handleExport} disabled={exporting}>
+          {exporting ? <Spinner /> : <DocumentPdf size={16} />}
           {exporting ? 'Exporting…' : 'Export PDF'}
         </button>
       </div>
+      {exportError && <Alert kind="error" title="The PDF couldn't be created">{exportError}</Alert>}
 
       {/* Document preview */}
       <div className="sb-doc" style={{ '--sb-img-ratio': aspectRatio.replace(':', '/') } as React.CSSProperties}>
         <div className="sb-doc-header">
-          <span className="sb-doc-title">Storyboard — {stem}</span>
+          <span className="sb-doc-title">Storyboard, {stem}</span>
           <span className="sb-doc-meta">
             {new Date().toLocaleDateString(undefined, { year: 'numeric', month: 'short', day: 'numeric' })}
           </span>

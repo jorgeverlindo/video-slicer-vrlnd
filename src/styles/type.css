@@ -1,0 +1,31 @@
+/* ── Typography — one class per Figma text style (VS/*) ─────────────────── */
+
+.t-display-xl { font: var(--weight-regular) var(--fs-display-xl)/var(--lh-display-xl) var(--font-serif); letter-spacing: var(--ls-display-xl); }
+.t-display-l  { font: var(--weight-regular) var(--fs-display-l)/var(--lh-display-l) var(--font-serif);  letter-spacing: var(--ls-display-l); }
+.t-title-m    { font: var(--weight-regular) var(--fs-title-m)/var(--lh-title-m) var(--font-serif);      letter-spacing: var(--ls-title-m); }
+.t-title-s    { font: var(--weight-regular) var(--fs-title-s)/var(--lh-title-s) var(--font-serif);      letter-spacing: var(--ls-title-s); }
+.t-transcript { font: var(--weight-regular) var(--fs-transcript)/var(--lh-transcript) var(--font-serif); }
+.t-body-l     { font: var(--weight-light) var(--fs-body-l)/var(--lh-body-l) var(--font-sans); }
+.t-body-m     { font: var(--weight-regular) var(--fs-body-m)/var(--lh-body-m) var(--font-sans); }
+.t-label-l    { font: var(--weight-medium) var(--fs-label-l)/var(--lh-label-l) var(--font-sans); }
+.t-label-m    { font: var(--weight-medium) var(--fs-label-m)/var(--lh-label-m) var(--font-sans); }
+.t-label-s    { font: var(--weight-medium) var(--fs-label-s)/var(--lh-label-s) var(--font-sans); letter-spacing: var(--ls-label-s); }
+.t-caption    { font: var(--weight-light) var(--fs-caption)/var(--lh-caption) var(--font-sans); }
+.t-mono-l     { font: var(--weight-regular) var(--fs-mono-l)/var(--lh-mono-l) var(--font-mono); font-variant-numeric: tabular-nums; }
+.t-mono-m     { font: var(--weight-regular) var(--fs-mono-m)/var(--lh-mono-m) var(--font-mono); font-variant-numeric: tabular-nums; }
+.t-mono-s     { font: var(--weight-regular) var(--fs-mono-s)/var(--lh-mono-s) var(--font-mono); font-variant-numeric: tabular-nums; }
+
+/* Color helpers — text only */
+.c-primary   { color: var(--c-text-primary); }
+.c-secondary { color: var(--c-text-secondary); }
+.c-subtle    { color: var(--c-text-subtle); }
+.c-brand     { color: var(--c-brand); }
+.c-danger    { color: var(--c-danger); }
+
+@media (max-width: 960px) {
+  .t-display-xl { font-size: var(--fs-display-l); line-height: var(--lh-display-l); }
+  .t-display-l  { font-size: var(--fs-title-m); line-height: var(--lh-title-m); }
+}
+@media (max-width: 600px) {
+  .t-display-xl { font-size: var(--fs-display-s); line-height: var(--lh-display-s); }
+}

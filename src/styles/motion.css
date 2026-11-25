@@ -1,0 +1,72 @@
+/* ── Motion ────────────────────────────────────────────────────────────────
+   Rules: skills/motion.md. Animate transform and opacity only; exits faster
+   than entrances; no overshoot on opacity or color; reduced motion keeps
+   opacity and drops movement. Every duration and curve below is a token.  */
+
+:root {
+  /* Easing */
+  --ease-out:    cubic-bezier(0.23, 1, 0.32, 1);     /* entering, settling */
+  --ease-in-out: cubic-bezier(0.77, 0, 0.175, 1);    /* on-screen moves */
+  --ease-drawer: cubic-bezier(0.32, 0.72, 0, 1);     /* sheets, bars */
+  --ease-exit:   cubic-bezier(0.4, 0, 1, 1);         /* leaving for good */
+  /* Spring for the hero deal. Apple-style params → damped harmonic motion,
+     sampled into linear(): perceptual duration 0.6s, bounce 0.3 (ζ 0.7),
+     thrown with initial velocity 0.6·ω0 like a dealt card. ~6% overshoot,
+     settles to 0.2% in --dur-spring-deal. Transform only, never opacity. */
+  --ease-spring-deal: linear(0, 0.1129, 0.2267, 0.3378, 0.4434, 0.5417, 0.6313, 0.7116, 0.7822, 0.8432, 0.8951, 0.9382, 0.9734, 1.0014, 1.0229, 1.0388, 1.0499, 1.057, 1.0608, 1.0619, 1.0608, 1.0582, 1.0544, 1.0499, 1.0449, 1.0397, 1.0344, 1.0294, 1.0246, 1.0202, 1.0161, 1.0125, 1.0094, 1.0067, 1.0044, 1.0025, 1.0009, 0.9997, 0.9988, 0.9981, 0.9976, 0.9973, 0.9972, 0.9972, 0.9972, 0.9974, 0.9975, 0.9978, 1);
+
+  /* Duration */
+  --dur-press:     120ms;  /* hover, press, toggle */
+  --dur-tooltip:   160ms;  /* small reveals, exits of popovers */
+  --dur-dropdown:  200ms;  /* menus, small expansions, bars */
+  --dur-modal:     300ms;  /* modal, stage change */
+  --dur-count:     400ms;  /* percent tween */
+  --dur-entrance:  640ms;  /* first-run hero, once per session */
+  --dur-logo-build: 1400ms;/* Jorge Logo entrance — Framer default */
+  --dur-spin:      800ms;  /* spinner revolution (linear) */
+  --dur-spring-deal: 848ms; /* spring above, settle time */
+  --dur-settle:    360ms;  /* thrown card coming to rest */
+
+  /* Choreography */
+  --stagger:       50ms;   /* siblings in one sequence */
+  --stagger-tight: 30ms;   /* long lists (result tiles) */
+  --lead:          120ms;  /* first step after the page paints */
+  --stagger-deal:  120ms;  /* hero stills: one card per beat, like a dealer */
+  --deal-lead:     200ms;  /* stills follow the copy (4 × stagger) */
+
+  /* Distance */
+  --rise-s: 8px;
+  --rise-m: 12px;
+  --rise-l: 24px;
+  --blur-in: 6px;
+  --deal-swing: -16deg;   /* hero stills: where the deal arc starts */
+  --lift-scale: 1.04;     /* picked-up card */
+  --menu-scale: 0.96;     /* menus grow from their trigger */
+}
+
+@keyframes fade-in   { from { opacity: 0; } }
+@keyframes fade-out  { to   { opacity: 0; } }
+@keyframes rise-in   { from { opacity: 0; transform: translateY(var(--rise, var(--rise-s))); } }
+@keyframes focus-in  { from { opacity: 0; transform: translateY(var(--rise-m)); filter: blur(var(--blur-in)); } }
+@keyframes pop-in    { from { opacity: 0; transform: scale(0.96); } }
+@keyframes modal-in  { from { opacity: 0; transform: scale(0.97); } }
+@keyframes bar-in    { from { opacity: 0; transform: translateY(var(--rise-m)); } }
+@keyframes spin      { to   { transform: rotate(360deg); } }
+
+/* Utility: stage change (M8). Incoming stage only; outgoing is instant. */
+.stage-in { animation: rise-in var(--dur-modal) var(--ease-out) backwards; } /* backwards: no lingering transform, or position:fixed children (selection bar) anchor to <main> */
+
+/* Utility: staggered children. Set --i on each child. */
+.stagger > * {
+  animation: rise-in var(--dur-modal) var(--ease-out) both;
+  animation-delay: calc(var(--i, 0) * var(--stagger-tight));
+}
+
+@media (prefers-reduced-motion: reduce) {
+  :root {
+    --rise-s: 0px; --rise-m: 0px; --rise-l: 0px; --blur-in: 0px;
+    --stagger: 0ms; --stagger-tight: 0ms;
+    --dur-entrance: 200ms; --dur-modal: 200ms;
+    --deal-swing: 0deg; --lift-scale: 1; --menu-scale: 1; --stagger-deal: 60ms; --dur-spring-deal: 200ms; --dur-settle: 0ms;
+  }
+}
