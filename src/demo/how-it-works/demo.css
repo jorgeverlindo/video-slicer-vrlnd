@@ -367,3 +367,16 @@
 .vsd .stepper__value { display: grid; place-items: center; white-space: nowrap; }
 .vsd .tx__lines { list-style: none; margin: 0; padding: 0; }
 .vsd .vsd-tiles { list-style: none; margin: 0; padding-left: 0; }
+
+/* The page is not the viewport: undo the app's narrow-viewport rules on the
+   wide page, so a mid-size window (or the 880px recording) still shows the
+   desktop layout it is drawing */
+.vsd-page:not([data-compact]) .topbar.vsd-topbar { grid-template-columns: 1fr auto 1fr; }
+.vsd-page:not([data-compact]) .steps__btn .t-label-m,
+.vsd-page:not([data-compact]) .brand__name,
+.vsd-page:not([data-compact]) .brand__by { display: inline; }
+.vsd-page:not([data-compact]) .steps__rule { display: block; }
+.vsd-page:not([data-compact]) .topbar__right .pill { display: inline-flex; }
+.vsd-page:not([data-compact]) .vsd-tx { grid-template-columns: minmax(0, 1fr) minmax(0, 1fr); }
+.vsd-page:not([data-compact]) .result__actions { width: auto; }
+.vsd-page:not([data-compact]) .result__actions .btn { flex: none; }
