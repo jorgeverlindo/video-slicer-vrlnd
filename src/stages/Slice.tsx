@@ -302,14 +302,15 @@ function SettingsPanel(p: Props & { native: boolean; ready: boolean; frameBytes:
         <Setting label="Transcribe audio" hint="Runs on your device">
           <Toggle checked={p.transcript.enabled} onChange={p.onTranscribe} label="Transcribe audio" />
         </Setting>
-        {p.transcript.enabled && (
+        {/* Always mounted so it can open and close in place; inert while closed */}
+        <div className="tx-reveal" data-open={p.transcript.enabled || undefined} {...(p.transcript.enabled ? {} : { inert: '' })}>
           <div className="tx-options">
             <Setting label="Language" hint={LANGUAGES.find((l) => l.value === p.transcript.lang)?.hint}>
               <Select label="Transcript language" value={p.transcript.lang} onChange={(v) => p.onLang(v as TranscriptLang)} options={LANGUAGES} />
             </Setting>
-            <TranscriptStatusLine t={p.transcript} onStart={p.onStartTranscript} />
+            {p.transcript.enabled && <TranscriptStatusLine t={p.transcript} onStart={p.onStartTranscript} />}
           </div>
-        )}
+        </div>
       </section>
 
       {p.error && <div className="alert alert--error" role="alert"><div className="alert__title">{p.error}</div></div>}

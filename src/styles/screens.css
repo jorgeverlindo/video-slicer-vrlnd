@@ -267,12 +267,27 @@ html.intro:not(.intro-run) .still { animation: none; opacity: 0; }
 .mark img { width: 100%; aspect-ratio: 16 / 9; object-fit: cover; border-radius: var(--radius-xs); }
 .mark__n { display: grid; place-items: center; width: var(--size-pin); height: var(--size-pin); border-radius: 50%; background: var(--c-brand); color: var(--c-on-brand); }
 .marks__empty { padding: var(--space-m); border-radius: var(--radius-m); background: var(--c-gray-100); text-align: center; }
-.tx-section { display: grid; gap: var(--space-s); }
+.tx-section { display: grid; }
+/* Disclosure: the one height animation in the app. Opening or closing the
+   options would otherwise jump everything below (the Extract button) by
+   ~100px; the rows track eases the panel instead. Content fades on top. */
+.tx-reveal {
+  display: grid; grid-template-rows: 0fr; margin-top: 0;
+  transition: grid-template-rows var(--dur-tooltip) var(--ease-exit), margin-top var(--dur-tooltip) var(--ease-exit);
+}
+.tx-reveal[data-open] {
+  grid-template-rows: 1fr; margin-top: var(--space-s);
+  transition: grid-template-rows var(--dur-dropdown) var(--ease-out), margin-top var(--dur-dropdown) var(--ease-out);
+}
+.tx-reveal > * { min-height: 0; overflow: hidden; }
+/* Clip only while it moves: once open, the language menu may overflow */
+.tx-reveal[data-open] > * { animation: unclip var(--dur-dropdown) step-end forwards; }
 .tx-options {
   display: grid; gap: var(--space-s); padding: var(--space-s) var(--space-m) var(--space-m);
   border-radius: var(--radius-l); background: var(--c-gray-100);
-  animation: rise-in var(--dur-dropdown) var(--ease-out) backwards;
+  opacity: 0; transition: opacity var(--dur-press) var(--ease-exit);
 }
+.tx-reveal[data-open] .tx-options { opacity: 1; transition: opacity var(--dur-dropdown) var(--ease-out); }
 .tx-line { display: flex; align-items: center; gap: var(--space-xs); color: var(--c-brand); }
 
 /* S4 processing */
@@ -298,7 +313,7 @@ html.intro:not(.intro-run) .still { animation: none; opacity: 0; }
 .result__panel { padding-top: var(--space-l); }
 
 .tiles { display: grid; grid-template-columns: repeat(auto-fill, minmax(var(--tile-min), 1fr)); gap: var(--space-m); padding-bottom: var(--space-5xl); }
-.tile { position: relative; animation: rise-in var(--dur-modal) var(--ease-out) both; animation-delay: calc(var(--i, 0) * var(--stagger-tight)); }
+.tile { position: relative; animation: fade-in var(--dur-modal) var(--ease-out) both; /* the stage already rises; tiles only stagger in */ animation-delay: calc(var(--i, 0) * var(--stagger-tight)); }
 .tile__select {
   position: relative; display: block; width: 100%; padding: 0; border: none; cursor: pointer;
   border-radius: var(--radius-m); overflow: hidden; background: var(--c-gray-100);

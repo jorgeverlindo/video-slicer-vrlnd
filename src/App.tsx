@@ -201,8 +201,12 @@ export default function App() {
   const txActive = tx.enabled && !!file && !['idle', 'done', 'error'].includes(tx.status)
   const busy = linkBusy || extracting || (!!file && !duration && !fatal) || txActive
 
-  const first = useRef(true)
-  useEffect(() => { first.current = false }, [])
+  // Stage entrance: only when the stage actually changes. The class must be
+  // there from the stage's first render and stay put — adding it on a later
+  // re-render (any state change) used to replay the whole page's rise-in.
+  const shown = useRef<{ stage: string; enter: boolean } | null>(null)
+  if (!shown.current) shown.current = { stage, enter: false }      // first paint: the intro owns it
+  else if (shown.current.stage !== stage) shown.current = { stage, enter: true }
 
   return (
     <div className="app">
@@ -211,7 +215,7 @@ export default function App() {
         canGoTo={(s) => (s === 2 && stage === 'result') || (s === 3 && stage === 'slice' && frames.length > 0 && !extracting)}
         onGoTo={(s) => setView(s === 3 ? 'result' : 'slice')}
       />
-      <main className={`main${first.current ? '' : ' stage-in'}`} key={stage} data-stage={stage}>
+      <main className={`main${shown.current.enter ? ' stage-in' : ''}`} key={stage} data-stage={stage}>
         {stage === 'home' && (
           <Home
             theme={theme} onFile={handleFile} onBusy={setLinkBusy}

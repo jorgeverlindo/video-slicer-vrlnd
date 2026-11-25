@@ -47,6 +47,11 @@ export default function Result(p: Props) {
   const tx = p.transcript
   const hasTx = tx.enabled && tx.status !== 'idle'
   const [tab, setTab] = useState<Tab>(storyboard ? 'storyboard' : 'frames')
+  // Tab panel rises in on a tab switch only; on arrival the stage itself rises,
+  // and nesting both made the content lurch twice
+  const firstTab = useRef(tab)
+  const tabChanged = useRef(false)
+  if (tab !== firstTab.current) tabChanged.current = true
   const [packing, setPacking] = useState(false)
   const [includeTx, setIncludeTx] = useState(true)
   const bytes = useMemo(() => p.frames.reduce((s, f) => s + f.blob.size, 0), [p.frames])
@@ -103,7 +108,7 @@ export default function Result(p: Props) {
         )}
       </div>
 
-      <div className="result__panel stage-in" key={tab} role="tabpanel" aria-labelledby={`tab-${tab}`}>
+      <div className={`result__panel${tabChanged.current ? ' stage-in' : ''}`} key={tab} role="tabpanel" aria-labelledby={`tab-${tab}`}>
         {tab === 'frames' && <FramesTab frames={p.frames} onDownload={downloadSet} packing={packing} />}
         {tab === 'transcript' && <TranscriptTab {...p} />}
         {tab === 'storyboard' && (
