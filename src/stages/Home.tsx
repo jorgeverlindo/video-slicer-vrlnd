@@ -114,38 +114,57 @@ const THROW_MS = 120    // release momentum: project velocity this far ahead
 // Live hero (dark theme only; light and reduced motion keep the stills).
 // Two variants, picked with ?hero=relay|loops while we compare:
 //  · loops — each card loops its own ~1s moment (trajectory-0N.mp4)
-//  · relay — one clip (trajectory-full.mp4) handed card to card: #004 plays
-//    the first beat and freezes on it, #009 picks up from that exact frame,
-//    then #013 runs to the end. Hold, then deal it again.
+//  · relay — one clip (trajectory-full.mp4) handed card to card, once: the
+//    moment the cards come to rest, #004 plays the first beat and freezes on
+//    it; #009 picks up from that exact frame with no gap, then #013 runs to
+//    the end and the three stay frozen as the trajectory.
 type HeroMode = 'relay' | 'loops'
 const heroMode = (): HeroMode => (new URLSearchParams(location.search).get('hero') === 'loops' ? 'loops' : 'relay')
 const RELAY = [0, 1.0, 2.5, 4.0]   // s: card i plays RELAY[i] → RELAY[i+1]
-const RELAY_START_MS = 1100        // after the cards touch down (--lead + --dur-land)
-const RELAY_HOLD_MS = 2600         // all three frozen before the next run
+const HANDOFF_LEAD = 0.04          // s: start the next card this early, so its
+                                   // decoder is running when this one freezes
 
-function useRelay(videos: React.MutableRefObject<(HTMLVideoElement | null)[]>, on: boolean) {
+function useRelay(
+  videos: React.MutableRefObject<(HTMLVideoElement | null)[]>,
+  cards: React.MutableRefObject<(HTMLElement | null)[]>,
+  on: boolean,
+) {
   useEffect(() => {
     if (!on) return
     const vs = videos.current
-    let raf = 0, timer = 0, card = -1, alive = true
-    const park = () => vs.forEach((v, i) => { if (v) { v.pause(); v.currentTime = RELAY[i] } })
+    let raf = 0, card = 0, started = false, alive = true
+    // Each card waits on its own first frame
+    vs.forEach((v, i) => { if (v) { v.pause(); v.currentTime = RELAY[i] } })
     const step = () => {
       if (!alive) return
-      const v = vs[card]
-      if (v && v.currentTime >= RELAY[card + 1] - 0.02) {
-        v.pause(); v.currentTime = Math.min(RELAY[card + 1] - 1 / 48, v.duration || Infinity) // freeze on its last beat
-        card++
-        if (card >= vs.length) { timer = window.setTimeout(run, RELAY_HOLD_MS); return }
-        vs[card]?.play().catch(() => {})
+      const v = vs[card], end = RELAY[card + 1]
+      if (v) {
+        // Next card rolls a beat before this one ends: no dead frame between
+        if (!started && card + 1 < vs.length && v.currentTime >= end - HANDOFF_LEAD) { started = true; vs[card + 1]?.play().catch(() => {}) }
+        if (v.currentTime >= end - 1 / 48 || v.ended) {
+          v.pause(); v.currentTime = Math.min(end, v.duration || end) - 1 / 48 // freeze on its last beat
+          card++; started = false
+          if (card >= vs.length) return // once: the trajectory stays
+        }
       }
       raf = requestAnimationFrame(step)
     }
-    const run = () => { park(); card = 0; vs[0]?.play().catch(() => {}); raf = requestAnimationFrame(step) }
-    // Show each card's first frame while waiting, then start after the landing
-    park()
-    timer = window.setTimeout(run, RELAY_START_MS)
-    return () => { alive = false; cancelAnimationFrame(raf); clearTimeout(timer); vs.forEach((v) => v?.pause()) }
-  }, [videos, on])
+    // Start the moment the cards come to rest (their deal animation ends);
+    // on the first visit that also covers the wait for fonts.
+    const html = document.documentElement
+    const waitDeal = () => {
+      if (!alive) return
+      // First visit: the deal is held until the faces load (main.tsx)
+      if (html.classList.contains('intro') && !html.classList.contains('intro-run')) { raf = requestAnimationFrame(waitDeal); return }
+      const deals = cards.current.flatMap((el) => el?.getAnimations().filter((a) => (a as CSSAnimation).animationName === 'still-deal') ?? [])
+      Promise.all(deals.map((a) => a.finished.catch(() => {}))).then(() => {
+        if (!alive) return
+        vs[0]?.play().catch(() => {}); raf = requestAnimationFrame(step)
+      })
+    }
+    raf = requestAnimationFrame(waitDeal)
+    return () => { alive = false; cancelAnimationFrame(raf); vs.forEach((v) => v?.pause()) }
+  }, [videos, cards, on])
 }
 
 type Drag = { i: number; sx: number; sy: number; ox: number; oy: number; lx: number; ly: number; lt: number; vx: number; vy: number }
@@ -157,9 +176,9 @@ function HeroStills({ theme }: { theme: 'light' | 'dark' }) {
   const live = theme === 'dark' && !prefersReducedMotion()
   const mode = heroMode()
   const videos = useRef<(HTMLVideoElement | null)[]>([])
-  useRelay(videos, live && mode === 'relay')
   const box = useRef<HTMLDivElement>(null)
   const cards = useRef<(HTMLElement | null)[]>([])
+  useRelay(videos, cards, live && mode === 'relay')
   const pos = useRef(TRAJECTORY.map(() => ({ x: 0, y: 0 })))
   const drag = useRef<Drag | null>(null)
   const [stack, setStack] = useState<number[]>(TRAJECTORY.map((_, i) => i)) // last = on top
