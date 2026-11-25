@@ -63,7 +63,10 @@ html.intro:not(.intro-run) .still { animation: none; opacity: 0; }
 /* Relay (dark hero, Home.tsx useRelay): every card flies the full
    --dur-land, leaving --relay-step after the previous, so they land
    --relay-step apart; each card's clip starts as its card leaves. */
-.stills[data-relay] .still { --deal-at: calc(var(--lead) + var(--d, 0) * var(--relay-step)); --deal-dur: var(--dur-land); } /* same flight, landings --relay-step apart */
+.stills[data-relay] .still {
+  --deal-at: calc(var(--lead) + var(--d, 0) * var(--relay-step)); --deal-dur: var(--dur-land); /* same flight, landings --relay-step apart */
+  animation-duration: var(--deal-dur), var(--deal-dur); /* fade 0 → 100 % across the whole flight, in deal order */
+}
 
 /* ── S1 Home ── */
 .home {

@@ -114,10 +114,10 @@ const THROW_MS = 120    // release momentum: project velocity this far ahead
 // Live hero (dark theme only; light and reduced motion keep the stills).
 // Two variants, picked with ?hero=relay|loops while we compare:
 //  · loops — each card loops its own ~1s moment (trajectory-0N.mp4)
-//  · relay — one clip (trajectory-full.mp4) across the pile: #004 deals in
-//    holding its frame, #009 plays frame 1 → 2 and #013 frame 2 → 3, each at
-//    normal speed from the moment its card leaves. The cards land
-//    --relay-step apart; each freezes on the end of its stretch.
+//  · relay — one clip (trajectory-full.mp4) across the pile, each card its
+//    own stretch at normal speed: #004 frame 0 → 1, #009 1 → 2, #013 2 → 3,
+//    each starting the moment its card leaves. Cards fade 0 → 100 % over
+//    their flight and land --relay-step apart; each freezes on its end.
 type HeroMode = 'relay' | 'loops'
 const heroMode = (): HeroMode => (new URLSearchParams(location.search).get('hero') === 'loops' ? 'loops' : 'relay')
 const RELAY = [0, 1.0, 2.5, 4.0]   // s: card i shows RELAY[i] → RELAY[i+1]
@@ -132,10 +132,9 @@ function useRelay(
     if (!on) return
     const vs = videos.current, els = cards.current
     let raf = 0, alive = true
-    // #004 holds its own frame (the end of its moment); the others wait on
-    // their first frame
-    vs.forEach((v, i) => { if (v) { v.pause(); v.playbackRate = 1; v.currentTime = i === 0 ? RELAY[1] - FRAME : RELAY[i] } })
-    // Each later card starts its stretch, at normal speed, the moment its
+    // Every card waits on the first frame of its stretch
+    vs.forEach((v, i) => { if (v) { v.pause(); v.playbackRate = 1; v.currentTime = RELAY[i] } })
+    // Each card starts its stretch, at normal speed, the moment its
     // own deal leaves (CSS staggers the deals by --relay-step), and freezes
     // on the last frame of its stretch
     const roll = (i: number) => {
@@ -156,7 +155,6 @@ function useRelay(
       if (html.classList.contains('intro') && !html.classList.contains('intro-run')) { raf = requestAnimationFrame(start); return }
       // Follow each card's own deal animation, so video and flight share a clock
       els.forEach((el, i) => {
-        if (i === 0) return
         const deal = el?.getAnimations().find((a) => (a as CSSAnimation).animationName === 'still-deal')
         const wait = deal ? Math.max(0, -Number(deal.currentTime ?? 0) + (Number(deal.effect?.getTiming().delay) || 0)) : 0
         window.setTimeout(() => roll(i), wait)
