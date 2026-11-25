@@ -246,6 +246,10 @@ function HeroStills({ theme }: { theme: 'light' | 'dark' }) {
             {live && mode === 'relay' && (
               <video className="still__video" ref={(el) => { videos.current[i] = el }} src="/hero/trajectory-full.mp4" width={960} height={540}
                 muted playsInline preload="auto" disablePictureInPicture
+                // Reveal on the first decoded frame, whatever brings it: card #004
+                // starts at 0, so it never seeks and 'seeked' alone left it hidden
+                // (the still showed through, then the video popped in at the end)
+                onLoadedData={(e) => { e.currentTarget.dataset.playing = '' }}
                 onSeeked={(e) => { e.currentTarget.dataset.playing = '' }} />
             )}
           </span>
