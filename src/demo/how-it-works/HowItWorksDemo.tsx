@@ -1,121 +1,137 @@
 import { useRef, useLayoutEffect, type ReactNode } from 'react'
-import { Check, ChevronDown, Download, FileArchive, FileImage, Mic, Sliders, Upload, Video } from 'lucide-react'
-import { Button, Collapse, Count, Menu, Meter, Popover, Spinner, Stage, States, Stream, Tabs, Window, type Act, type Layout, type Point, type Theme } from '../stageshow-kit'
+import {
+  Add, Asleep, Checkmark, Copy, DocumentDownload, Download, Light, Link, Maximize, Microphone,
+  PlayFilledAlt, PlayOutline, Reset, Security, Subtract, Upload, Video, VolumeUp,
+} from '@carbon/icons-react'
+import { FileArchive } from 'lucide-react'
+import { Count, Stage, Stream, Window, type Act, type Layout, type Point, type Theme } from '../stageshow-kit'
+import { Progress, RadioCard, Segmented, Setting, Spinner, Toggle } from '../../ui/primitives'
+import JorgeLogo from '../../brand/JorgeLogo'
 import { CallPoster, FRAMES } from './frames'
 import './demo.css'
 
-// Video Slicer, How it works. One loop told in two chapters.
+// Video Slicer, How it works. One loop told in two chapters, on the app's
+// current interface: the page is built from the app's own components and
+// classes (topbar, home, slice panel, result tiles), drawn at a reduced zoom
+// inside a browser window, so it can never drift from the real screens.
 //
 // Chapter 1, upload and extract: a recorded usability session is dragged
-// from the desktop into the dropzone; the workspace opens on it. The cursor
-// keeps only unique frames, turns on the audio transcript and picks its
-// language; the model loads and transcribes while Extract slices seven frames
-// into the grid below, which the page scrolls to.
+// from the desktop onto the home; the Slice screen opens on it. The cursor
+// keeps only unique frames, turns on Transcribe audio, confirms the language
+// and starts the transcript; the speech model loads while Extract slices
+// the video, and the Result screen deals seven frames.
 //
-// Chapter 2, read and export: the Transcription tab streams the session's
-// lines with their timecodes; back on Frames the transcript is included in
-// the ZIP, Download packs it, and the archive lands on the desktop under the
-// video it came from. Clear video is the visible reset back to the dropzone.
+// Chapter 2, read and export: the Transcript tab streams the session's lines
+// with their timecodes; back on Frames the transcript goes into the ZIP,
+// Download all frames packs it, and the archive lands on the desktop under
+// the video it came from. Start over is the visible reset back to the home.
 //
 // Every frame is an illustration of a moment in the call, in the app's own
 // palette: no real faces, names or client assets. The transcript is written
 // for the demo, not taken from the recording.
 
 const FILE = 'user-test.mp4'
-const ZIP = 'frames.zip'
+const ZIP = 'user-test_frames.zip'
 
-const LANGS = ['English', 'Portuguese', 'Spanish', 'French']
+const LANGS = [
+  { label: 'English', hint: 'Small model, ready in seconds' },
+  { label: 'Portuguese', hint: 'One-time 460 MB download' },
+]
 
 const LINES = [
-  { t: '00:05', text: 'Thanks for joining. Today we’ll look at bulk editing.' },
-  { t: '01:05', text: 'I’d start by filtering the lifestyle images first.' },
-  { t: '04:05', text: 'This dialog asks which fields to overwrite. That’s clear.' },
-  { t: '06:05', text: 'Five selected, and the panel shows what they share.' },
+  { t: '0:05', text: 'Thanks for joining. Today we’ll look at bulk editing.' },
+  { t: '1:05', text: 'I’d start by filtering the lifestyle images first.' },
+  { t: '4:05', text: 'This dialog asks which fields to overwrite. That’s clear.' },
+  { t: '6:05', text: 'Five selected, and the panel shows what they share.' },
   { t: '11:05', text: 'Opening one, I can check its tags in context.' },
 ]
 const WORDS = LINES.map((l) => l.text.split(' ').length)
 const TOTAL_WORDS = WORDS.reduce((a, b) => a + b, 0)
 
+const SCANNED = 30 // moments the interval finds; unique frames keeps 7
+
 type Ghost = { on: boolean; dropped: boolean; off: Point; at: Point }
-type Model = 'idle' | 'download' | 'transcribing' | 'ready'
+type Screen = 'home' | 'slice' | 'result'
+type Tx = 'idle' | 'download' | 'transcribing' | 'done'
 
 type S = {
   ghost: Ghost
-  loaded: boolean
+  screen: Screen
   unique: boolean
-  transcript: boolean
-  langOpen: boolean
-  lang: number | null
+  tx: boolean
+  lang: 'closed' | 'open' | 'closing'
   hoverLang: number | undefined
-  model: Model
+  txStatus: Tx
   pct: number
   extracting: boolean
+  scanned: number
   frames: number
-  tab: 0 | 1
+  tab: 'frames' | 'transcript'
   words: number
   include: boolean
   zip: 'idle' | 'packing' | 'done'
   downloads: boolean
-  scrolled: boolean
+  /** Page scroll, in the app's own pixels */
+  scroll: number
 }
 
 const NO_GHOST: Ghost = { on: false, dropped: false, off: { x: 0, y: 0 }, at: { x: 0, y: 0 } }
 
 const initial: S = {
   ghost: NO_GHOST,
-  loaded: false,
+  screen: 'home',
   unique: false,
-  transcript: false,
-  langOpen: false,
-  lang: null,
+  tx: false,
+  lang: 'closed',
   hoverLang: undefined,
-  model: 'idle',
+  txStatus: 'idle',
   pct: 0,
   extracting: false,
+  scanned: 0,
   frames: 0,
-  tab: 0,
+  tab: 'frames',
   words: 0,
   include: false,
   zip: 'idle',
   downloads: false,
-  scrolled: false,
+  scroll: 0,
 }
 
-// The payoff, for reduced motion and thumbnails: everything done, the ZIP in
-// the downloads popover over the finished grid.
-const poster: S = {
-  ...initial,
-  loaded: true,
-  unique: true,
-  transcript: true,
-  lang: 0,
-  model: 'ready',
-  pct: 100,
-  frames: 7,
-  words: TOTAL_WORDS,
-  include: true,
-  zip: 'done',
-  downloads: true,
-  scrolled: true,
+// Where chapter 2 begins: everything chapter 1 did, already done
+const CH2_START: Partial<S> = {
+  ghost: NO_GHOST, screen: 'result', unique: true, tx: true, lang: 'closed', hoverLang: undefined,
+  txStatus: 'done', pct: 100, extracting: false, scanned: SCANNED, frames: FRAMES.length,
+  tab: 'frames', words: 0, include: false, zip: 'idle', downloads: false, scroll: 0,
 }
+
+// The payoff, for reduced motion and thumbnails: frames and transcript out,
+// the ZIP on the desktop beside the video it came from
+const poster: S = { ...initial, ...CH2_START, words: TOTAL_WORDS, include: true, zip: 'done', downloads: true } as S
+
+/** The page is the app at its own size, zoomed into the window */
+const ZOOM: Record<Layout, number> = { wide: 0.62, compact: 0.66 }
 
 type Geo = { win: { x: number; y: number; w: number; h: number }; desk: { x: number; y: number }; zip: { x: number; y: number } }
 const GEO: Record<Layout, Geo> = {
-  wide: { win: { x: 168, y: 32, w: 760, h: 1000 }, desk: { x: 32, y: 32 }, zip: { x: 32, y: 164 } },
+  wide: { win: { x: 160, y: 32, w: 688, h: 1000 }, desk: { x: 24, y: 32 }, zip: { x: 24, y: 164 } },
   compact: { win: { x: 16, y: 80, w: 326, h: 1200 }, desk: { x: 16, y: 16 }, zip: { x: 190, y: 16 } },
 }
 
 export type Chapter = 1 | 2
 
-// Where chapter 2 begins: everything chapter 1 did, already done
-const CH2_START: Partial<S> = {
-  ghost: NO_GHOST, loaded: true, unique: true, transcript: true, langOpen: false,
-  lang: 0, hoverLang: undefined, model: 'ready', pct: 100, extracting: false,
-  frames: 7, tab: 0, words: 0, include: false, zip: 'idle', downloads: false, scrolled: true,
-}
-
 function makeScript(onChapter: (c: Chapter) => void, startAt: { current: Chapter }) {
   return async function script(a: Act<S>) {
+    const zoom = ZOOM[a.layout]
+    const bottom = () => a.rect('stage-floor').y
+    // Scroll the page just enough to bring a target's foot into the window
+    const reveal = async (target: string, room = 24) => {
+      const r = a.rect(target)
+      const over = r.y + r.height + room - bottom()
+      if (over <= 0) return
+      await a.set((s) => ({ scroll: s.scroll + over / zoom }))
+      await a.wait(700)
+    }
+
     // A chapter picked in the host starts the first run there; later loops
     // play the whole story from the top
     const start = startAt.current
@@ -125,93 +141,109 @@ function makeScript(onChapter: (c: Chapter) => void, startAt: { current: Chapter
       onChapter(2)
       await a.wait(500)
     } else {
-    onChapter(1)
-    await a.wait(300)
-
-    // 1. Drag the recording off the desktop into the dropzone
-    a.mark('grab')
-    const thumb = a.rect('desk-thumb')
-    const file = a.rect('desk-file')
-    const grab = { x: thumb.x + thumb.width * 0.5, y: thumb.y + thumb.height * 0.55 }
-    await a.move(grab)
-    await a.wait(220)
-    const off = { x: grab.x - file.x, y: grab.y - file.y }
-    const drop = a.rect('drop')
-    a.mark('drag')
-    await a.drag({ x: drop.x + drop.width * 0.45, y: drop.y + drop.height * 0.5 }, (at) => {
-      a.put({ ghost: { on: true, dropped: false, off, at } })
-    }, { duration: 1300, cursor: 'preserve' })
-
-    // 2. Drop: the workspace opens on the video
-    a.mark('drop')
-    await a.set((s) => ({ ghost: { ...s.ghost, dropped: true }, loaded: true }))
-    await a.wait(900)
-
-    // 3. Keep only unique frames
-    a.mark('unique')
-    await a.click('unique')
-    await a.set({ unique: true })
-    await a.wait(450)
-
-    // 4. Audio transcript on; pick its language
-    a.mark('transcript')
-    await a.click('transcript')
-    await a.set({ transcript: true })
-    await a.wait(450)
-    await a.click('lang')
-    await a.set({ langOpen: true })
-    await a.wait(380)
-    await a.move('lang-0')
-    a.put({ hoverLang: 0 })
-    await a.wait(260)
-    a.mark('pick')
-    await a.click('lang-0')
-    await a.set({ lang: 0 })
-    await a.wait(60)
-    await a.set({ langOpen: false, hoverLang: undefined, model: 'download' })
-
-    // 5. The model loads (cached after the first time) and transcribes
-    for (const pct of [28, 61, 88, 100]) {
-      a.put({ pct })
+      onChapter(1)
       await a.wait(300)
-    }
-    a.put({ model: 'transcribing' })
-    await a.wait(300)
 
-    // 6. Extract: the page scrolls to the grid as seven frames arrive
-    a.mark('extract')
-    await a.click({ at: 'extract', x: 0.88, y: 0.5 })
-    await a.set({ extracting: true })
-    a.put({ scrolled: true })
-    await a.wait(500)
-    for (let i = 1; i <= FRAMES.length; i++) {
-      a.put({ frames: i })
-      await a.wait(230)
-    }
-    a.put({ extracting: false, model: 'ready' })
-    await a.wait(1600)
+      // 1. Drag the recording off the desktop onto the home
+      a.mark('grab')
+      const thumb = a.rect('desk-thumb')
+      const file = a.rect('desk-file')
+      const grab = { x: thumb.x + thumb.width * 0.5, y: thumb.y + thumb.height * 0.55 }
+      await a.move(grab)
+      await a.wait(220)
+      const off = { x: grab.x - file.x, y: grab.y - file.y }
+      const drop = a.rect('drop')
+      a.mark('drag')
+      await a.drag({ x: drop.x + drop.width * 0.42, y: drop.y + drop.height * 0.5 }, (at) => {
+        a.put({ ghost: { on: true, dropped: false, off, at } })
+      }, { duration: 1300, cursor: 'preserve' })
 
-    onChapter(2)
+      // 2. Drop: the Slice screen opens on the video
+      a.mark('drop')
+      await a.set((s) => ({ ghost: { ...s.ghost, dropped: true }, screen: 'slice' }))
+      await a.wait(1000)
+
+      // 3. Keep only unique frames
+      a.mark('unique')
+      await a.click('unique')
+      await a.set({ unique: true })
+      await a.wait(500)
+
+      // 4. Transcribe audio: its options open; the page follows them down
+      a.mark('transcript')
+      await a.click('transcribe')
+      await a.set({ tx: true })
+      await a.wait(320)
+      await reveal('extract')
+
+      // 5. Confirm the language
+      await a.click('lang')
+      await a.set({ lang: 'open' })
+      await a.wait(380)
+      await a.move('lang-0')
+      a.put({ hoverLang: 0 })
+      await a.wait(260)
+      a.mark('pick')
+      await a.click('lang-0')
+      await a.set({ lang: 'closing' })
+      await a.wait(160)
+      a.put({ lang: 'closed', hoverLang: undefined })
+      await a.wait(200)
+
+      // 6. Start the transcript: the speech model loads (only the first time)
+      a.mark('start')
+      await a.click('start')
+      await a.set({ txStatus: 'download' })
+      for (const pct of [28, 61, 88, 100]) {
+        a.put({ pct })
+        await a.wait(300)
+      }
+      a.put({ txStatus: 'transcribing' })
+      await a.wait(300)
+
+      // 7. Extract: the panel scans and keeps the frames that change
+      a.mark('extract')
+      await a.click('extract')
+      await a.set({ extracting: true, scroll: 0 })
+      for (let n = 3; n <= SCANNED; n += 3) {
+        a.put({ scanned: n })
+        await a.wait(120)
+      }
+      await a.wait(250)
+
+      // 8. Result: seven frames dealt onto the page
+      await a.set({ screen: 'result', extracting: false, txStatus: 'done' })
+      await a.wait(200)
+      for (let i = 1; i <= FRAMES.length; i++) {
+        a.put({ frames: i })
+        await a.wait(110)
+      }
+      await a.wait(1500)
+
+      onChapter(2)
     }
 
     // Chapter 2: read the transcript, then export
     a.mark('tab')
     await a.click('tab-transcript')
-    await a.set({ tab: 1 })
-    await a.wait(250)
+    await a.set({ tab: 'transcript' })
+    await a.wait(300)
+    await reveal('tx-end', 16)
     for (let w = 1; w <= TOTAL_WORDS; w++) {
       a.put({ words: w })
       await a.wait(32)
     }
     await a.wait(1500)
 
+    await a.set({ scroll: 0 })
+    await a.wait(700)
     await a.click('tab-frames')
-    await a.set({ tab: 0 })
+    await a.set({ tab: 'frames' })
     await a.wait(500)
     a.mark('include')
     await a.click('include')
     await a.set({ include: true })
-    await a.wait(420)
+    await a.wait(450)
 
     a.mark('download')
     await a.click('zip')
@@ -221,19 +253,16 @@ function makeScript(onChapter: (c: Chapter) => void, startAt: { current: Chapter
     a.mark('payoff')
     await a.wait(2400)
 
-    // Reset with a cause: close the popover, back up the page, Clear video
-    await a.set({ downloads: false })
-    await a.set({ scrolled: false })
-    await a.wait(650)
+    // Reset with a cause: Start over takes the page back to the home
     a.mark('clear')
-    await a.click('clear')
-    await a.set({ loaded: false, ghost: NO_GHOST })
-    await a.move(HOME.wide && a.layout === 'compact' ? HOME.compact : HOME.wide)
+    await a.click('start-over')
+    await a.set({ screen: 'home', downloads: false, ghost: NO_GHOST })
+    await a.move(a.layout === 'compact' ? HOME.compact : HOME.wide)
     await a.snap({
-      unique: false, transcript: false, lang: null, model: 'idle', pct: 0,
-      frames: 0, tab: 0, words: 0, include: false, zip: 'idle',
+      unique: false, tx: false, txStatus: 'idle', pct: 0, scanned: 0, frames: 0,
+      tab: 'frames', words: 0, include: false, zip: 'idle', scroll: 0,
     })
-    await a.wait(150)
+    await a.wait(300)
   }
 }
 
@@ -272,6 +301,8 @@ export default function HowItWorks({ theme = 'light', onChapter, startAt = 1, fr
         const lifted = s.ghost.on && !s.ghost.dropped
         return (
           <>
+            <span className="vsd-floor" data-target="stage-floor" aria-hidden />
+
             <div className="vsd-desk" data-target="desk-file" data-lifted={lifted || undefined} style={{ left: g.desk.x, top: g.desk.y }}>
               <span className="vsd-desk__thumb" data-target="desk-thumb">
                 <CallPoster className="vsd-art" />
@@ -288,21 +319,19 @@ export default function HowItWorks({ theme = 'light', onChapter, startAt = 1, fr
             </div>
 
             <Browser layout={layout} style={{ left: g.win.x, top: g.win.y, width: g.win.w, height: g.win.h }}>
-              <Page scrolled={s.scrolled}>
-                  <div className="vsd-hero">
-                    <span className="vsd-hero__title">Video Slicer</span>
-                    <span className="vsd-hero__sub">Extract frames from any video, locally in your browser.</span>
-                  </div>
-                  <Collapse open={!s.loaded}>
-                    <Dropzone />
-                  </Collapse>
-                  <Collapse open={s.loaded}>
-                    <Workspace s={s} layout={layout} />
-                  </Collapse>
-                  <Collapse open={s.loaded && (s.extracting || s.frames > 0)}>
-                    <Results s={s} layout={layout} />
-                  </Collapse>
-              </Page>
+              <div
+                className="vsd-page"
+                data-compact={layout === 'compact' || undefined}
+                style={{ zoom: ZOOM[layout], '--vsd-scroll': `${-s.scroll}px` } as React.CSSProperties}
+                {...{ inert: '' }}
+              >
+                <Topbar screen={s.screen} theme={theme} />
+                <div className="vsd-screens">
+                  <section className="vsd-screen" data-on={s.screen === 'home' || undefined}><Home /></section>
+                  <section className="vsd-screen" data-on={s.screen === 'slice' || undefined}><Slice s={s} /></section>
+                  <section className="vsd-screen" data-on={s.screen === 'result' || undefined}><Result s={s} /></section>
+                </div>
+              </div>
             </Browser>
 
             <DragImage ghost={s.ghost}>
@@ -316,11 +345,11 @@ export default function HowItWorks({ theme = 'light', onChapter, startAt = 1, fr
   )
 }
 
-/* ---------- The page ------------------------------------------------- */
+/* ---------- The window ---------------------------------------------- */
 
 /** Wide: the app in a quiet browser window. Compact (a phone column): the
- *  page itself on a panel, since a desktop window squeezed to 326px wide
- *  would read as a squashed app. */
+ *  page itself on a panel, since browser chrome at 326px wide would only
+ *  crowd it. */
 function Browser({ layout, style, children }: { layout: Layout; style: React.CSSProperties; children: ReactNode }) {
   if (layout === 'compact') {
     return (
@@ -336,180 +365,386 @@ function Browser({ layout, style, children }: { layout: Layout; style: React.CSS
   )
 }
 
-/** The app's page. Scrolled, it shifts up so the results sit at the top of
- *  the window; the shift is measured from the results' own position, so the
- *  poster can show it too. */
-function Page({ scrolled, children }: { scrolled: boolean; children: ReactNode }) {
-  const ref = useRef<HTMLDivElement>(null)
-  useLayoutEffect(() => {
-    const page = ref.current
-    const results = page?.querySelector<HTMLElement>('[data-target="results"]')
-    if (!page || !results) return
-    let top = 0
-    let el: HTMLElement | null = results
-    while (el && el !== page) {
-      top += el.offsetTop
-      el = el.offsetParent as HTMLElement | null
-    }
-    page.style.setProperty('--vs-shift', `${Math.max(0, top - 12)}px`)
-  })
-  return (
-    <div ref={ref} className="vsd-page" data-scrolled={scrolled || undefined}>
-      {children}
-    </div>
-  )
-}
+/* ---------- The app's topbar ---------------------------------------- */
 
-function Dropzone() {
-  return (
-    <div className="vsd-drop" data-target="drop" data-drop>
-      <span className="vsd-drop__icon"><Upload size={22} strokeWidth={1.5} /></span>
-      <span className="vsd-drop__title">Drop a video here or click to browse</span>
-      <span className="vsd-drop__hint">MP4 · MOV · WEBM · MKV</span>
-    </div>
-  )
-}
+const STEPS: { label: string; at: Screen }[] = [
+  { label: 'Video', at: 'home' },
+  { label: 'Slice', at: 'slice' },
+  { label: 'Result', at: 'result' },
+]
+const ORDER: Screen[] = ['home', 'slice', 'result']
 
-function CardHead({ icon, title, meta }: { icon: ReactNode; title: string; meta?: ReactNode }) {
+function Topbar({ screen, theme }: { screen: Screen; theme: Theme }) {
+  const now = ORDER.indexOf(screen)
   return (
-    <div className="vsd-card__head">
-      <span className="vsd-card__title">{icon}{title}</span>
-      {meta !== undefined && <span className="vsd-card__meta">{meta}</span>}
-    </div>
-  )
-}
-
-function Checkbox({ on, label, hint, target }: { on: boolean; label: string; hint?: string; target: string }) {
-  return (
-    <span className="vsd-check" data-target={target} data-cursor="pointer">
-      <span className="vsd-check__box" data-on={on || undefined}>
-        <Check size={11} strokeWidth={3} />
-      </span>
-      <span className="vsd-check__label">{label}</span>
-      {hint && <span className="vsd-check__hint">{hint}</span>}
-    </span>
-  )
-}
-
-function Workspace({ s, layout }: { s: S; layout: Layout }) {
-  return (
-    <div className="vsd-work" data-compact={layout === 'compact' || undefined}>
-      <div className="vsd-card vsd-source">
-        <CardHead icon={<Video size={14} strokeWidth={1.75} />} title="Source" meta="1920×1080 · 30:29" />
-        <div className="vsd-source__video">
-          <CallPoster className="vsd-art" />
-        </div>
-        <div className="vsd-source__file">
-          <span className="vsd-source__name">{FILE}</span>
-          <span className="vsd-card__meta">412 MB</span>
-        </div>
+    <header className="topbar vsd-topbar">
+      <div className="brand">
+        <span className="brand__home">
+          <JorgeLogo size={32} build={false} />
+          <span className="brand__name t-title-s">Video Slicer</span>
+        </span>
+        <span className="brand__by t-caption">by <span>Jorge Verlindo</span></span>
       </div>
-
-      <div className="vsd-card vsd-params">
-        <CardHead icon={<Sliders size={14} strokeWidth={1.75} />} title="Parameters" meta={<>1 / 60s</>} />
-        <div className="vsd-params__body">
-          <div className="vsd-seg">
-            {['Interval', 'Fixed count', 'Custom', 'Storyboard'].map((m, i) => (
-              <span key={m} className="vsd-seg__opt" data-on={i === 0 || undefined}>{m}</span>
-            ))}
-          </div>
-          <div className="vsd-rule" />
-          <Checkbox on={s.unique} label="Only unique frames" hint="skips near-identical frames" target="unique" />
-          <Checkbox on={s.transcript} label="Audio Transcript" target="transcript" />
-          <Collapse open={s.transcript}>
-            <div className="vsd-lang-row">
-              <span className="vsd-select" data-target="lang" data-cursor="pointer" data-open={s.langOpen || undefined}>
-                <States value={s.lang === null ? 'none' : 'chosen'} align="start" className="vsd-select__text" states={{ none: <span>Select language</span>, chosen: <span data-chosen>{LANGS[s.lang ?? 0]}</span> }} />
-                <ChevronDown size={14} strokeWidth={1.75} />
-              </span>
-              <States
-                value={s.model}
-                align="start"
-                className="vsd-model"
-                states={{
-                  idle: <span />,
-                  download: (
-                    <span className="vsd-model__line">
-                      <Meter value={s.pct / 100} className="vsd-model__meter" />
-                      <span className="vsd-model__pct"><Count value={s.pct} duration={280} format={(n) => String(Math.round(n)).padStart(3, '\u2007')} />%</span>
-                    </span>
-                  ),
-                  transcribing: <span className="vsd-model__line"><Spinner size={12} /> Transcribing…</span>,
-                  ready: <span className="vsd-model__line vsd-model__ready"><Check size={12} strokeWidth={2.5} /> Transcript ready</span>,
-                }}
-              />
-            </div>
-          </Collapse>
-          <Popover show={s.langOpen} origin="bottom left" className="vsd-lang-menu">
-            <Menu items={LANGS} value={s.hoverLang} targets={LANGS.map((_, i) => `lang-${i}`)} />
-          </Popover>
-        </div>
-        <div className="vsd-params__foot">
-          <Button className="vsd-btn" data-target="clear" data-cursor="pointer">Clear video</Button>
-          <Button className="vsd-btn vsd-btn--extract" variant="primary" data-target="extract" data-cursor="pointer">
-            <States value={s.extracting ? 'go' : s.unique ? 'unique' : 'all'} states={{ all: <span>Extract frames (~30)</span>, unique: <span>Extract frames (~7)</span>, go: <span>Extracting {s.frames}/7</span> }} />
-          </Button>
-        </div>
-      </div>
-    </div>
-  )
-}
-
-function Results({ s, layout }: { s: S; layout: Layout }) {
-  const ready = s.model === 'ready' || s.model === 'transcribing'
-  return (
-    <div className="vsd-results" data-target="results" data-compact={layout === 'compact' || undefined}>
-      <div className="vsd-results__bar">
-        <Tabs
-          className="vsd-tabs"
-          value={s.tab}
-          targets={['tab-frames', 'tab-transcript']}
-          items={[
-            <span key="f" className="vsd-tab"><FileImage size={14} strokeWidth={1.75} />Frames<span className="vsd-tab__count"><Count value={s.frames} duration={240} /></span></span>,
-            <span key="t" className="vsd-tab"><Mic size={14} strokeWidth={1.75} />Transcription</span>,
-          ]}
-        />
-        {layout === 'wide' && <Actions s={s} />}
-      </div>
-      {layout === 'compact' && <Actions s={s} />}
-      <div className="vsd-panels">
-
-        <div className="vsd-grid" data-show={s.tab === 0 || undefined}>
-          {FRAMES.map(({ Art, time }, i) => (
-            <div key={time} className="vsd-shot" data-on={i < s.frames || undefined}>
-              <div className="vsd-shot__img"><Art className="vsd-art" /></div>
-              <div className="vsd-shot__meta">
-                <span className="vsd-shot__chip">#{String(i + 1).padStart(3, '0')}</span>
-                <span className="vsd-shot__time">{time}</span>
-              </div>
-            </div>
-          ))}
-        </div>
-        <div className="vsd-transcript" data-show={s.tab === 1 || undefined} data-ready={ready || undefined}>
-          {LINES.map((l, i) => {
-            const before = WORDS.slice(0, i).reduce((a, b) => a + b, 0)
-            const count = Math.max(0, Math.min(WORDS[i], s.words - before))
+      <nav className="steps">
+        <ol>
+          {STEPS.map((st, i) => {
+            const state = i < now ? 'done' : i === now ? 'current' : 'todo'
             return (
-              <div key={l.t} className="vsd-line" data-on={count > 0 || undefined}>
-                <span className="vsd-line__time">{l.t}</span>
-                <Stream className="vsd-line__text" text={l.text} count={count} />
-              </div>
+              <li key={st.label} className="steps__item" data-state={state}>
+                {i > 0 && <span className="steps__rule" />}
+                <span className="steps__btn">
+                  <span className="steps__n t-label-s">{state === 'done' ? <Checkmark size={12} /> : i + 1}</span>
+                  <span className="t-label-m">{st.label}</span>
+                </span>
+              </li>
             )
           })}
+        </ol>
+      </nav>
+      <div className="topbar__right">
+        <span className="pill"><Security size={14} /> Nothing leaves your device</span>
+        <span className="icon-btn icon-btn--outline">{theme === 'dark' ? <Light size={16} /> : <Asleep size={16} />}</span>
+      </div>
+    </header>
+  )
+}
+
+/* ---------- Home ------------------------------------------------------ */
+
+const STILLS = [
+  { n: '01', label: '#004', t: '00:00:04.0', cls: 'still--back' },
+  { n: '02', label: '#009', t: '00:00:08.0', cls: 'still--top' },
+  { n: '03', label: '#013', t: '00:00:13.0', cls: 'still--front' },
+] as const
+
+function Home() {
+  return (
+    <div className="vsd-home" data-target="drop" data-drop>
+      <div className="home__copy">
+        <h1 className="t-display-xl home__title">
+          <span>Drop a video.</span>
+          <span>Keep every frame.</span>
+        </h1>
+        <p className="t-body-l c-subtle home__lede">
+          Pull stills, a transcript or a storyboard out of any clip, right in your browser.
+          The file never leaves your machine.
+        </p>
+        <div>
+          <div className="home__actions">
+            <span className="btn btn--primary btn--l"><Upload size={16} /> Choose a video</span>
+            <span className="btn btn--secondary btn--l"><Link size={16} /> Paste a link</span>
+            <span className="btn btn--link btn--l"><PlayOutline size={16} /> <span>See how it works</span></span>
+          </div>
+          <p className="t-caption c-subtle home__note">Works with MP4, MOV, WebM and MKV</p>
         </div>
+        <div className="home__transcribe">
+          <Toggle checked={false} onChange={() => {}} label="Also transcribe the audio" />
+          <span className="t-label-m">Also transcribe the audio</span>
+          <span className="select"><span className="select__trigger" aria-disabled><span>English</span></span></span>
+        </div>
+      </div>
+
+      <div className="stills vsd-stills">
+        {STILLS.map((c) => (
+          <figure key={c.n} className={`still ${c.cls}`}>
+            <span className="still__media">
+              <img className="still__img still__img--light" src={`/hero/trajectory-${c.n}-light.webp`} alt="" draggable={false} />
+              <img className="still__img still__img--dark" src={`/hero/trajectory-${c.n}-dark.webp`} alt="" draggable={false} />
+            </span>
+            <figcaption>
+              <span className="t-mono-s">{c.label}</span>
+              <span className="t-mono-s">{c.t}</span>
+            </figcaption>
+          </figure>
+        ))}
+      </div>
+
+      <div className="home__drop">
+        <Upload size={32} />
+        <span className="t-title-m">Drop the video here</span>
       </div>
     </div>
   )
 }
 
-function Actions({ s }: { s: S }) {
+/* ---------- Slice ----------------------------------------------------- */
+
+const PRESETS = [
+  { value: 'interval', title: 'Interval', desc: 'Every few seconds' },
+  { value: 'count', title: 'Fixed count', desc: 'Spread evenly' },
+  { value: 'custom', title: 'Custom', desc: 'Moments you pick' },
+  { value: 'storyboard', title: 'Storyboard', desc: 'One per spoken line' },
+]
+const QUALITY = ['Draft', 'Good', 'High', 'Max'].map((l) => ({ value: l.toLowerCase(), label: l }))
+const noop = () => {}
+
+function Slice({ s }: { s: S }) {
   return (
-    <span className="vsd-results__actions" data-show={s.tab === 0 || undefined}>
-          <Checkbox on={s.include} label="Include transcript" target="include" />
-          <Button className="vsd-btn vsd-btn--zip" variant="primary" data-target="zip" data-cursor="pointer" icon={<States value={s.zip} className="vsd-zip-icon" states={{ idle: <Download size={14} strokeWidth={1.75} />, packing: <Spinner size={12} />, done: <Check size={14} strokeWidth={2.25} /> }} />}>
-            <States value={s.zip} states={{ idle: <span>Download ZIP</span>, packing: <span>Packing…</span>, done: <span>Downloaded</span> }} />
-          </Button>
-    </span>
+    <div className="vsd-slice">
+      <div className="slice__media">
+        <div className="file-row">
+          <Video size={16} />
+          <span className="file-row__name t-label-m">{FILE}</span>
+          <span className="btn btn--ghost">Replace video</span>
+        </div>
+        <Player />
+        <Strip />
+      </div>
+      <aside className="panel vsd-panel">
+        <div className="vsd-panel__swap" data-on={!s.extracting || undefined}><Settings s={s} /></div>
+        <div className="vsd-panel__swap vsd-panel__over" data-on={s.extracting || undefined}><Processing s={s} /></div>
+      </aside>
+    </div>
+  )
+}
+
+function Player({ time = '00:00:00.000' }: { time?: string }) {
+  return (
+    <div className="player">
+      <CallPoster className="player__video" />
+      <div className="player__scrim" />
+      <div className="player__controls">
+        <span className="player__play"><PlayFilledAlt size={16} /></span>
+        <span className="t-mono-m player__time">{time} <span className="player__dur">/ 00:30:29.000</span></span>
+        <span className="player__spacer" />
+        <span className="icon-btn player__icon"><VolumeUp size={16} /></span>
+        <span className="icon-btn player__icon"><Maximize size={16} /></span>
+      </div>
+    </div>
+  )
+}
+
+function Strip() {
+  const cells = [0, 0, 1, 1, 2, 3, 3, 4, 5, 6, 6, 6]
+  return (
+    <div className="filmstrip">
+      <div className="filmstrip__track">
+        <div className="filmstrip__marks">
+          {Array.from({ length: 13 }, (_, i) => <span key={i} className="filmstrip__tick" style={{ left: `${(i / 12) * 100}%` }} />)}
+        </div>
+        <div className="filmstrip__strip">
+          {cells.map((f, i) => {
+            const { Art } = FRAMES[f]
+            return <span key={i} className="filmstrip__cell"><Art className="vsd-art" /></span>
+          })}
+        </div>
+        <span className="filmstrip__head" style={{ left: '0%' }} />
+      </div>
+      <div className="filmstrip__labels t-mono-s c-subtle"><span>0:00</span><span>30:29</span></div>
+    </div>
+  )
+}
+
+function Settings({ s }: { s: S }) {
+  const status = s.txStatus
+  return (
+    <div className="panel__body">
+      <header className="panel__head"><h2 className="t-title-m">How should we slice it?</h2></header>
+      <fieldset className="presets">
+        {PRESETS.map((o) => (
+          <RadioCard key={o.value} name="vsd-mode" value={o.value} title={o.title} desc={o.desc} checked={o.value === 'interval'} onChange={noop} />
+        ))}
+      </fieldset>
+      <hr className="divider" />
+      <div className="panel__rows">
+        <Setting label="One frame every" hint="Shorter gaps catch more motion">
+          <div className="stepper">
+            <span className="icon-btn"><Subtract size={16} /></span>
+            <span className="stepper__value">60.0 s</span>
+            <span className="icon-btn"><Add size={16} /></span>
+          </div>
+        </Setting>
+        <div className="vsd-hit" data-target="unique" data-cursor="pointer">
+          <Setting label="Only unique frames" hint="Skips near-identical shots">
+            <Toggle checked={s.unique} onChange={noop} label="Only unique frames" />
+          </Setting>
+        </div>
+        <div className="field">
+          <span className="field__label">Image quality</span>
+          <Segmented label="Image quality" value="high" onChange={noop} options={QUALITY} />
+        </div>
+      </div>
+
+      <hr className="divider" />
+      <section className="tx-section">
+        <div className="vsd-hit" data-target="transcribe" data-cursor="pointer">
+          <Setting label="Transcribe audio" hint="Runs on your device">
+            <Toggle checked={s.tx} onChange={noop} label="Transcribe audio" />
+          </Setting>
+        </div>
+        <div className="tx-reveal" data-open={s.tx || undefined}>
+          <div className="tx-options">
+            <Setting label="Language" hint={LANGS[0].hint}>
+              <span className="select" data-open={s.lang === 'open' || undefined}>
+                <span className="select__trigger" data-target="lang" data-cursor="pointer">
+                  <span>English</span>
+                  <svg className="select__chev" width="16" height="16" viewBox="0 0 32 32" fill="currentColor"><path d="M16 22 6 12l1.4-1.4 8.6 8.6 8.6-8.6L26 12z" /></svg>
+                </span>
+                {s.lang !== 'closed' && (
+                  <ul className="menu" data-side="bottom" data-closing={s.lang === 'closing' || undefined}>
+                    {LANGS.map((o, i) => (
+                      <li key={o.label} className="menu__item" data-active={s.hoverLang === i || undefined} aria-selected={i === 0} data-target={`lang-${i}`} data-cursor="pointer">
+                        <span className="menu__text">
+                          <span className="menu__label">{o.label}</span>
+                          <span className="menu__hint">{o.hint}</span>
+                        </span>
+                        <Checkmark size={16} className="menu__check" />
+                      </li>
+                    ))}
+                  </ul>
+                )}
+              </span>
+            </Setting>
+            <div className="vsd-swap">
+              <span className="vsd-swap__item" data-on={status === 'idle' || undefined}>
+                <span className="btn btn--secondary btn--block" data-target="start" data-cursor="pointer">Start transcription</span>
+              </span>
+              <span className="vsd-swap__item" data-on={status === 'download' || status === 'transcribing' || undefined}>
+                <span className="tx-line">
+                  <Spinner />
+                  <span className="field__hint">
+                    {status === 'download'
+                      ? <>Downloading the speech model, <Count value={s.pct} duration={280} format={(n) => String(Math.round(n))} />%</>
+                      : 'Transcribing…'}
+                  </span>
+                </span>
+              </span>
+              <span className="vsd-swap__item" data-on={status === 'done' || undefined}>
+                <p className="field__hint">Transcript ready, {LINES.length} lines.</p>
+              </span>
+            </div>
+          </div>
+        </div>
+      </section>
+
+      <div className="panel__action">
+        <span className="btn btn--primary btn--l btn--block" data-target="extract" data-cursor="pointer">
+          {s.unique ? 'Extract unique frames' : `Extract ${SCANNED} frames`}
+        </span>
+        <p className="t-caption c-subtle vsd-hint" data-on={s.unique || undefined}>Scans {SCANNED} moments and keeps the ones that change</p>
+      </div>
+    </div>
+  )
+}
+
+function Processing({ s }: { s: S }) {
+  const kept = Math.round((s.scanned / SCANNED) * FRAMES.length)
+  const pct = Math.round((s.scanned / SCANNED) * 100)
+  return (
+    <div className="panel__body">
+      <header className="processing__head">
+        <p className="t-label-m c-subtle">Slicing your video</p>
+        <p className="t-display-l processing__pct">{pct}%</p>
+        <p className="t-body-m c-subtle">Scanned {s.scanned} of {SCANNED}, kept {kept}.</p>
+      </header>
+      <Progress value={pct / 100} label="Slicing progress" />
+      <div className="arrivals">
+        {Array.from({ length: 4 }, (_, i) => {
+          const idx = kept - 4 + i
+          const f = idx >= 0 ? FRAMES[idx] : null
+          return f
+            ? <span key={f.time} className="arrivals__img vsd-arrival"><f.Art className="vsd-art" /></span>
+            : <span key={`e${i}`} className="arrivals__empty" />
+        })}
+      </div>
+      <hr className="divider" />
+      <div className="tx-card">
+        <div className="tx-card__row"><Microphone size={16} /><span className="t-label-m">Transcribing</span></div>
+        <p className="t-caption c-subtle">Runs on your device while the frames come out.</p>
+      </div>
+      <div className="panel__action">
+        <span className="btn btn--secondary btn--l btn--block">Cancel</span>
+      </div>
+    </div>
+  )
+}
+
+/* ---------- Result ---------------------------------------------------- */
+
+function Result({ s }: { s: S }) {
+  return (
+    <div className="result">
+      <header className="result__head">
+        <div>
+          <h1 className="t-display-l">{FRAMES.length} frames</h1>
+          <p className="t-body-m c-subtle">From {FILE}, unique frames only. 1920 × 1080 JPEG, 1.4 MB in total.</p>
+        </div>
+        <div className="result__actions">
+          <span className="btn btn--ghost btn--l" data-target="start-over" data-cursor="pointer"><Reset size={16} /> Start over</span>
+          <span className="btn btn--secondary btn--l vsd-dl" data-target="zip" data-cursor="pointer">
+            <span className="vsd-swap vsd-swap--icon">
+              <span className="vsd-swap__item" data-on={s.zip === 'idle' || undefined}><Download size={16} /></span>
+              <span className="vsd-swap__item" data-on={s.zip === 'packing' || undefined}><Spinner /></span>
+              <span className="vsd-swap__item" data-on={s.zip === 'done' || undefined}><Checkmark size={16} /></span>
+            </span>
+            <span className="vsd-swap vsd-swap--label">
+              <span className="vsd-swap__item" data-on={s.zip === 'idle' || undefined}>Download all frames</span>
+              <span className="vsd-swap__item" data-on={s.zip === 'packing' || undefined}>Packing…</span>
+              <span className="vsd-swap__item" data-on={s.zip === 'done' || undefined}>Downloaded</span>
+            </span>
+          </span>
+        </div>
+      </header>
+
+      <div className="result__tabs">
+        <div className="tabs">
+          <span className="tab" aria-selected={s.tab === 'frames'} data-target="tab-frames" data-cursor="pointer">
+            Frames <span className="chip-count">{FRAMES.length}</span>
+          </span>
+          <span className="tab" aria-selected={s.tab === 'transcript'} data-target="tab-transcript" data-cursor="pointer">
+            Transcript <span className="chip-count">{LINES.length}</span>
+          </span>
+        </div>
+        <span className="result__include t-label-m vsd-include" data-show={s.tab === 'frames' || undefined} data-target="include" data-cursor="pointer">
+          <Toggle checked={s.include} onChange={noop} label="Include transcript in ZIP" /> Include transcript in ZIP
+        </span>
+      </div>
+
+      <div className="result__panel vsd-panels">
+        <ul className="tiles vsd-tiles" data-show={s.tab === 'frames' || undefined}>
+          {FRAMES.map(({ Art, time }, i) => (
+            <li key={time} className="tile vsd-tile" data-on={i < s.frames || undefined} style={{ '--i': i } as React.CSSProperties}>
+              <span className="tile__select">
+                <Art className="vsd-tile__img" />
+                <span className="tile__scrim" />
+                <span className="tile__meta">
+                  <span className="t-mono-s">{String(i + 1).padStart(3, '0')}</span>
+                  <span className="t-mono-s">{time}.000</span>
+                </span>
+              </span>
+            </li>
+          ))}
+        </ul>
+
+        <div className="tx vsd-tx" data-show={s.tab === 'transcript' || undefined}>
+          <div className="tx__media"><Player time="00:00:05.000" /></div>
+          <section className="tx__body">
+            <header className="tx__head">
+              <h2 className="t-title-s">Transcript</h2>
+              <div className="tx__tools">
+                <span className="btn btn--ghost"><Copy size={16} /> Copy</span>
+                <span className="btn btn--secondary"><DocumentDownload size={16} /> Download .md</span>
+              </div>
+            </header>
+            <ol className="tx__lines">
+              {LINES.map((l, i) => {
+                const before = WORDS.slice(0, i).reduce((x, y) => x + y, 0)
+                const count = Math.max(0, Math.min(WORDS[i], s.words - before))
+                return (
+                  <li key={l.t}>
+                    <span className="tx-line-btn vsd-line" data-on={count > 0 || undefined} data-active={i === 0 || undefined}>
+                      <span className="t-mono-s c-subtle">{l.t}</span>
+                      <Stream className="t-transcript" text={l.text} count={count} />
+                    </span>
+                  </li>
+                )
+              })}
+            </ol>
+            <span data-target="tx-end" />
+          </section>
+        </div>
+      </div>
+    </div>
   )
 }
 
@@ -525,10 +760,13 @@ function DragImage({ ghost, children }: { ghost: Ghost; children: ReactNode }) {
     const root = ref.current?.closest<HTMLElement>('.ss-stage')
     let next: HTMLElement | null = null
     if (following && root) {
+      // The page is inert (not hit-testable), so test the drop target's box
       const box = root.getBoundingClientRect()
       const scale = box.width / root.offsetWidth || 1
-      const hit = document.elementFromPoint(box.left + x * scale, box.top + y * scale)?.closest<HTMLElement>('[data-drop]') ?? null
-      if (hit && root.contains(hit)) next = hit
+      const px = box.left + x * scale, py = box.top + y * scale
+      const drop = root.querySelector<HTMLElement>('[data-drop]')
+      const r = drop?.getBoundingClientRect()
+      if (drop && r && px >= r.left && px <= r.right && py >= r.top && py <= r.bottom) next = drop
     }
     if (next !== over.current) {
       over.current?.removeAttribute('data-over')

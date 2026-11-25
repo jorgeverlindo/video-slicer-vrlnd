@@ -160,642 +160,176 @@
   background: var(--vs-bg);
 }
 
+
+/* ---- The page: the app at its own size, zoomed into the window ----
+   Leaves are the app's own classes (btn, toggle, radio-card, seg, tiles…);
+   the screen grids below copy .home / .slice / .result without their
+   viewport media queries, since the page is not the viewport. */
+
+.vsd-floor { position: absolute; left: 0; right: 0; bottom: 0; height: 0; pointer-events: none; }
+
 .vsd-page {
-  padding: 20px 24px 40px;
+  width: 1108px;
+  padding: 0 32px 32px;
+  background: var(--c-bg);
+  color: var(--c-text-primary);
+  transform: translateY(var(--vsd-scroll, 0px));
+  transition: transform 0.7s cubic-bezier(0.45, 0, 0.1, 1);
   will-change: transform;
-  transition: transform 0.8s cubic-bezier(0.45, 0, 0.1, 1);
 }
+.vsd-page[data-compact] { width: 494px; padding: 0 16px 24px; }
 
-.vsd-page[data-scrolled] {
-  transition: transform 0.8s cubic-bezier(0.45, 0, 0.1, 1) 0.26s;
-  transform: translateY(calc(-1 * var(--vs-shift, 0px)));
-}
+.vsd-page .topbar.vsd-topbar { padding: 0; max-width: none; }
+.vsd-page[data-compact] .topbar.vsd-topbar { grid-template-columns: auto 1fr auto; }
+.vsd-page[data-compact] .brand__by,
+.vsd-page[data-compact] .brand__name,
+.vsd-page[data-compact] .topbar__right .pill,
+.vsd-page[data-compact] .steps__rule,
+.vsd-page[data-compact] .steps__item:not([data-state='current']) .t-label-m { display: none; }
+.vsd-page[data-compact] .steps { justify-self: center; }
+.vsd-page .steps__btn,
+.vsd-page .btn,
+.vsd-page .tab,
+.vsd-page .select__trigger { cursor: default; }
 
-/* What scrolls away under the top edge fades first, so nothing is cut hard */
-.vsd-hero,
-.vsd-work {
-  /* Coming back, they fade up only once they are below the top edge */
-  transition: opacity 0.35s ease 0.6s;
-}
-
-.vsd-page[data-scrolled] .vsd-hero,
-.vsd-page[data-scrolled] .vsd-work {
+/* Screens share one place; the incoming one rises in as the app's stage-in */
+.vsd-screens { display: grid; }
+.vsd-screen {
+  grid-area: 1 / 1;
   opacity: 0;
-  transition: opacity 0.18s ease;
+  visibility: hidden;
+  transform: translateY(12px);
+  transition: opacity 0.12s ease-in, transform 0.12s ease-in, visibility 0s linear 0.12s;
+}
+.vsd-screen[data-on] {
+  opacity: 1;
+  visibility: visible;
+  transform: none;
+  transition: opacity 0.42s cubic-bezier(0.25, 0.8, 0.25, 1) 0.14s, transform 0.5s cubic-bezier(0.25, 0.8, 0.25, 1) 0.14s, visibility 0s;
 }
 
-.vsd-results { will-change: transform; }
+/* ---- Home (S1) ---- */
 
-.vsd .vsd-card__title svg,
-.vsd .vsd-select svg,
-.vsd .vsd-tab svg {
-  flex: none;
-  color: var(--vs-icon);
-}
-
-.vsd .ss-stage[data-layout='compact'] .vsd-page {
-  padding: 14px 12px 40px;
-}
-
-.vsd-dl-icon {
-  display: grid;
-  place-items: center;
-  width: 26px;
-  height: 24px;
-  margin-left: auto;
-  border-radius: 6px;
-  color: var(--vs-text-2);
-  transition: background-color 0.2s ease, color 0.2s ease;
-}
-
-.vsd-dl-icon[data-on] {
-  background: var(--vs-brand-10);
-  color: var(--vs-brand);
-}
-
-/* ---- Dropzone ---- */
-
-.vsd-drop {
-  flex: none;
-  display: flex;
-  flex-direction: column;
-  align-items: center;
-  justify-content: center;
-  gap: 8px;
-  height: 200px;
-  border-radius: 14px;
-  border: 1.5px dashed var(--vs-brand-35);
-  background: var(--vs-card);
-  transition: background-color 0.15s ease, border-color 0.15s ease;
-}
-
-.vsd-drop[data-over] {
-  border-color: var(--vs-brand);
-  background: color-mix(in srgb, var(--vs-brand) 6%, var(--vs-card));
-}
-
-.vsd-drop__icon {
-  display: grid;
-  place-items: center;
-  width: 44px;
-  height: 44px;
-  margin-bottom: 4px;
-  border-radius: 50%;
-  background: var(--vs-brand-10);
-  color: var(--vs-brand);
-}
-
-.vsd-drop__title {
-  font-size: 15px;
-  color: var(--vs-text);
-}
-
-.vsd-drop__hint {
-  font-size: 12px;
-  color: var(--vs-text-2);
-}
-
-/* ---- Cards ---- */
-
-.vsd-work {
-  display: grid;
-  grid-template-columns: 286px minmax(0, 1fr);
-  gap: 12px;
-  align-items: stretch;
-}
-
-.vsd-work[data-compact] {
-  grid-template-columns: minmax(0, 1fr);
-}
-
-.vsd-card {
+.vsd-home {
   position: relative;
-  border-radius: 14px;
-  border: 1px solid var(--vs-border);
-  background: var(--vs-card);
-  box-shadow: 0 2px 4px rgba(70, 67, 62, 0.1);
-}
-
-.vsd-card__head {
-  display: flex;
-  justify-content: space-between;
-  align-items: center;
-  gap: 12px;
-  padding: 12px 16px 6px;
-}
-
-.vsd-card__title,
-.vsd-label {
-  display: inline-flex;
-  align-items: center;
-  gap: 6px;
-  font-size: 11px;
-  text-transform: uppercase;
-  letter-spacing: 0.08em;
-  line-height: 20px;
-  color: var(--vs-text-2);
-}
-
-.vsd-card__meta {
-  font-family: var(--vs-mono);
-  font-size: 11px;
-  color: var(--vs-text-2);
-  white-space: nowrap;
-}
-
-.vsd-source__file {
-  display: flex;
-  justify-content: space-between;
-  align-items: center;
-  gap: 12px;
-  padding: 0 16px 16px;
-}
-
-.vsd-source__name {
-  font-size: 13px;
-  color: var(--vs-text);
-}
-
-.vsd-source {
-  display: flex;
-  flex-direction: column;
-}
-
-.vsd-source__video {
-  margin: 6px 16px auto;
-  aspect-ratio: 16 / 9;
-  border-radius: 8px;
-  overflow: hidden;
-}
-
-.vsd-work[data-compact] .vsd-source {
   display: grid;
-  grid-template-columns: 112px minmax(0, 1fr);
+  grid-template-columns: minmax(0, 1.1fr) minmax(0, 1fr);
   align-items: center;
+  gap: var(--space-3xl);
+  min-height: 560px;
+  padding: var(--space-3xl) var(--space-3xl);
+  border: var(--stroke-s) dashed var(--c-brand-35);
+  border-radius: var(--radius-xl);
+  background: var(--c-surface);
+  transition: border-color var(--dur-tooltip) ease;
 }
+.vsd-home[data-over] { border-color: var(--c-brand); }
+.vsd-home[data-over] .home__drop { opacity: 1; }
+.vsd-page[data-compact] .vsd-home { grid-template-columns: 1fr; min-height: 0; padding: var(--space-xl) var(--space-m); border-radius: var(--radius-l); }
+.vsd-page[data-compact] .home__actions .btn--l { flex: 1; }
+.vsd-page[data-compact] .home__transcribe { flex-wrap: wrap; }
 
-.vsd-work[data-compact] .vsd-source .vsd-card__head {
-  grid-column: 2;
-  grid-row: 1;
-  flex-direction: column;
-  align-items: flex-start;
-  gap: 2px;
-  padding: 12px 14px 12px 4px;
-}
+/* The hero stills sit still here: no deal, no relay, no drag */
+.vsd-stills { height: 400px; }
+.vsd-page .still { animation: none; cursor: default; }
+.vsd-page[data-compact] .vsd-stills { height: 260px; }
 
-.vsd-work[data-compact] .vsd-source__video {
-  grid-column: 1;
-  grid-row: 1;
-  margin: 12px;
-  width: 88px;
-}
+/* ---- Slice (S2) ---- */
 
-.vsd-params__body {
-  position: relative;
-  display: flex;
-  flex-direction: column;
-  gap: 10px;
-  padding: 6px 16px 0;
-}
-
-.vsd-label { margin-bottom: -3px; }
-
-.vsd-seg {
+.vsd-slice {
   display: grid;
-  grid-template-columns: repeat(4, minmax(0, 1fr));
-  padding: 3px;
-  border-radius: 6px;
-  background: var(--vs-gray);
+  grid-template-columns: minmax(0, 1fr) var(--panel-w);
+  gap: var(--space-xl);
+  align-items: start;
+  padding-top: var(--space-xs);
 }
+.vsd-page[data-compact] .vsd-slice { grid-template-columns: 1fr; }
+.vsd-page[data-compact] .filmstrip { display: none; }
 
-.vsd-seg__opt {
-  padding: 6px 2px;
-  border-radius: 4px;
-  text-align: center;
-  font-size: 11px;
-  text-transform: uppercase;
-  white-space: nowrap;
-  color: var(--vs-text-2);
-}
+.vsd .player__video { display: block; object-fit: cover; }
+.vsd .player__time { color: var(--c-on-media); }
 
-.vsd-seg__opt[data-on] {
-  background: var(--vs-card);
-  color: var(--vs-brand);
-  box-shadow: 0 2px 4px rgba(70, 67, 62, 0.1);
-}
+.vsd-hit { display: block; }
 
-.vsd-rule {
-  height: 1px;
-  margin: 2px 0;
-  background: var(--vs-border);
-}
+.vsd-panel { position: relative; }
+.vsd-panel__swap { transition: opacity 0.2s ease-in; }
+.vsd-panel__swap:not([data-on]) { opacity: 0; visibility: hidden; transition: opacity 0.16s ease-in, visibility 0s linear 0.16s; }
+.vsd-panel__swap[data-on] { opacity: 1; transition: opacity 0.32s cubic-bezier(0.25, 0.8, 0.25, 1) 0.1s; }
+.vsd-panel__over { position: absolute; inset: var(--space-xl) var(--space-l) var(--space-l); display: flex; }
+.vsd-panel__over > .panel__body { flex: 1; }
 
-/* ---- Checkbox (the app's native box, in its brand) ---- */
+/* While it's open, the language menu may hang out of the options */
+.vsd .tx-reveal[data-open] > * { overflow: visible; }
 
-.vsd-check {
-  display: inline-flex;
+.vsd-hint { opacity: 0; transition: opacity var(--dur-press) ease; }
+.vsd-hint[data-on] { opacity: 1; }
+
+/* One place, several contents: crossfade, the outgoing one quicker */
+.vsd-swap { display: grid; }
+.vsd-swap__item {
+  grid-area: 1 / 1;
+  display: grid;
   align-items: center;
-  gap: 8px;
-  align-self: flex-start;
-  font-size: 13px;
-  line-height: 18px;
-  white-space: nowrap;
-}
-
-.vsd-check__box {
-  display: grid;
-  place-items: center;
-  flex: none;
-  width: 15px;
-  height: 15px;
-  border-radius: 4px;
-  box-shadow: inset 0 0 0 1.25px var(--vs-brand-35);
-  background: var(--vs-card);
-  color: var(--vs-bg);
-  transition: background-color 0.16s ease, box-shadow 0.16s ease;
-}
-
-.vsd-check__box[data-on] {
-  background: var(--vs-brand);
-  box-shadow: none;
-  color: var(--vs-bg);
-}
-
-.vsd-check__box svg {
   opacity: 0;
-  transform: scale(0.6);
-  transition: opacity 0.14s ease, transform 0.22s cubic-bezier(0.34, 1.56, 0.64, 1);
+  visibility: hidden;
+  transition: opacity 0.14s ease-in, visibility 0s linear 0.14s;
 }
-
-.vsd-check__box[data-on] svg { opacity: 1; transform: scale(1); }
-
-.vsd-check__hint {
-  font-size: 10px;
-  color: var(--vs-muted);
+.vsd-swap__item[data-on] {
+  opacity: 1;
+  visibility: visible;
+  transition: opacity 0.26s cubic-bezier(0.25, 0.8, 0.25, 1) 0.08s, visibility 0s;
 }
+.vsd-swap--icon .vsd-swap__item { justify-items: center; width: 16px; }
+.vsd-swap--label .vsd-swap__item { justify-items: start; }
+.vsd-dl { min-width: 236px; justify-content: flex-start; }
 
-/* ---- Language select and model status ---- */
+.vsd-arrival { display: block; overflow: hidden; }
 
-.vsd-lang-row {
-  display: flex;
-  align-items: center;
-  gap: 12px;
-  padding: 2px 0 1px 23px;
-}
+/* ---- Result (S5, S6) ---- */
 
-.vsd-select {
-  display: inline-flex;
-  flex: none;
-  align-items: center;
-  gap: 6px;
-  height: 26px;
-  padding: 0 8px 0 10px;
-  border-radius: 999px;
-  border: 1px solid var(--vs-border);
-  font-size: 12px;
-  color: var(--vs-text-2);
-  background: var(--vs-card);
-}
+.vsd .result__include { transition: opacity var(--dur-press) ease; }
+.vsd .result__include:not([data-show]) { opacity: 0; }
 
-.vsd-select[data-open] { border-color: var(--vs-brand-35); }
-
-.vsd-select__text { min-width: 96px; }
-.vsd-select__text [data-chosen] { color: var(--vs-text); }
-
-.vsd-model { min-width: 0; font-size: 12px; color: var(--vs-text-2); }
-
-.vsd-model__line {
-  display: inline-flex;
-  align-items: center;
-  gap: 6px;
-  white-space: nowrap;
-}
-
-.vsd-model__meter {
-  width: 72px;
-  background: var(--vs-gray-2);
-}
-
-.vsd-model__meter .ss-meter__fill {
-  background: var(--vs-brand);
-  transition-duration: 0.28s;
-}
-
-.vsd-model__pct {
-  display: inline-block;
-  min-width: 4.2ch;
-  font-family: var(--vs-mono);
-  font-size: 11px;
-}
-
-.vsd-model__ready { color: var(--vs-text); }
-.vsd-model__ready svg { color: var(--vs-ok); }
-
-.vsd-lang-menu {
-  position: absolute;
-  z-index: 5;
-  left: 39px;
-  /* Opens upward from the select: below it the card meets the stage edge */
-  bottom: 34px;
-  width: 150px;
-  padding: 4px;
-  border-radius: 10px;
-  --ss-popover-bg: var(--vs-card);
-}
-
-.vsd-lang-menu .ss-menu__item {
-  font-size: 13px;
-  color: var(--vs-text);
-}
-
-.vsd-lang-menu .ss-menu__item[data-active] {
-  background: var(--vs-brand-10);
-}
-
-.vsd-params__foot {
-  display: grid;
-  grid-template-columns: minmax(0, 1fr) minmax(0, 1.5fr);
-  gap: 8px;
-  padding: 16px;
-}
-
-/* The app's buttons: pill, uppercase, light weight */
-.vsd .vsd-btn {
-  --ss-button-height: 34px;
-  --ss-button-pad: 14px;
-  --ss-button-pad-icon: 12px;
-  border-radius: 999px;
-  font-size: 12px;
-  font-weight: 400;
-  letter-spacing: 0.02em;
-  text-transform: uppercase;
-  color: var(--vs-brand);
-  background: var(--vs-bg);
-  box-shadow: inset 0 0 0 1px var(--vs-border);
-}
-
-.vsd .vsd-btn[data-variant='primary'] {
-  background: var(--vs-brand);
-  color: var(--vs-bg);
-  box-shadow: none;
-}
-
-.vsd .vsd-btn[data-variant='primary'][data-hover] {
-  background: color-mix(in srgb, var(--vs-brand), #000 10%);
-}
-
-/* ---- Results ---- */
-
-.vsd-results { padding-top: 26px; }
-
-.vsd-results__bar {
-  display: flex;
-  align-items: center;
-  justify-content: space-between;
-  gap: 12px;
-  border-bottom: 1px solid var(--vs-border);
-}
-
-
-.vsd-tabs {
-  --ss-accent: var(--vs-brand);
-}
-
-.vsd-tab {
-  display: inline-flex;
-  align-items: center;
-  gap: 6px;
-  font-size: 13px;
-}
-
-.vsd-tab__count {
-  display: inline-grid;
-  place-items: center;
-  min-width: 20px;
-  height: 18px;
-  padding: 0 6px;
-  border-radius: 999px;
-  background: var(--vs-gray-2);
-  font-family: var(--vs-mono);
-  font-size: 10px;
-}
-
-.vsd-results__actions {
-  display: inline-flex;
-  align-items: center;
-  gap: 14px;
-  padding-bottom: 6px;
-  transition: opacity 0.2s ease;
-  opacity: 0;
-}
-
-.vsd-results__actions[data-show] { opacity: 1; }
-
-.vsd-results__actions .vsd-check { align-self: center; }
-
-.vsd-results[data-compact] .vsd-results__actions {
-  display: flex;
-  justify-content: space-between;
-  padding: 12px 0 0;
-}
-
-.vsd-panels {
-  display: grid;
-  padding-top: 14px;
-}
-
+.vsd-panels { display: grid; }
 .vsd-panels > * {
   grid-area: 1 / 1;
-  transition: opacity 0.14s ease;
   opacity: 0;
+  visibility: hidden;
+  transition: opacity 0.14s ease-in, visibility 0s linear 0.14s;
 }
-
-/* The outgoing panel clears before the incoming one fades up */
 .vsd-panels > [data-show] {
   opacity: 1;
-  transition: opacity 0.24s ease 0.12s;
+  visibility: visible;
+  transition: opacity 0.3s cubic-bezier(0.25, 0.8, 0.25, 1) 0.12s, visibility 0s;
 }
 
-.vsd-grid {
-  display: grid;
-  grid-template-columns: repeat(4, minmax(0, 1fr));
-  gap: 12px;
-}
-
-.vsd-results[data-compact] .vsd-grid {
-  grid-template-columns: repeat(2, minmax(0, 1fr));
-  gap: 10px;
-}
-
-.vsd-shot {
-  border-radius: 8px;
-  border: 1px solid var(--vs-border);
-  background: var(--vs-card);
-  overflow: hidden;
-  box-shadow: 0 2px 4px rgba(70, 67, 62, 0.1);
-}
-
-/* A skeleton at the frame's own geometry until the frame arrives */
-.vsd-shot__img {
-  aspect-ratio: 16 / 9;
-  background: var(--vs-gray-2);
-}
-
-.vsd-shot__img > svg {
+.vsd-tiles { grid-template-columns: repeat(3, minmax(0, 1fr)); }
+.vsd-page[data-compact] .vsd-tiles { grid-template-columns: repeat(2, minmax(0, 1fr)); }
+.vsd .vsd-tile {
+  animation: none;
   opacity: 0;
-  transition: opacity 0.45s cubic-bezier(0.25, 0.8, 0.25, 1);
+  transform: translateY(8px);
+  transition: opacity 0.18s ease-in, transform 0.18s ease-in;
 }
-
-.vsd-shot[data-on] .vsd-shot__img > svg { opacity: 1; }
-
-.vsd-shot__meta {
-  display: flex;
-  justify-content: space-between;
-  align-items: center;
-  gap: 6px;
-  padding: 7px 8px;
-  opacity: 0.35;
-  transition: opacity 0.3s ease;
+.vsd .vsd-tile[data-on] {
+  opacity: 1;
+  transform: none;
+  transition: opacity 0.4s cubic-bezier(0.25, 0.8, 0.25, 1), transform 0.5s cubic-bezier(0.25, 0.8, 0.25, 1);
 }
+.vsd .tile__select { cursor: default; }
+.vsd-tile__img { display: block; width: 100%; aspect-ratio: 16 / 9; }
 
-.vsd-shot[data-on] .vsd-shot__meta { opacity: 1; }
+.vsd-page[data-compact] .vsd-tx { grid-template-columns: 1fr; }
+.vsd-page[data-compact] .vsd-tx .tx__media { display: none; }
+.vsd .tx__media { position: static; }
+.vsd .tx-line-btn { cursor: default; }
+.vsd-line { opacity: 0.35; transition: opacity 0.2s ease; }
+.vsd-line[data-on] { opacity: 1; }
+.vsd-page[data-compact] .result__actions { width: 100%; }
+.vsd-page[data-compact] .result__actions .btn { flex: 1; }
+.vsd-page[data-compact] .vsd-dl { min-width: 0; }
 
-.vsd-shot__chip {
-  display: inline-flex;
-  align-items: center;
-  height: 18px;
-  padding: 0 6px;
-  border-radius: 6px;
-  background: var(--vs-gray);
-  font-family: var(--vs-mono);
-  font-size: 10px;
-}
-
-.vsd-shot__time {
-  font-family: var(--vs-mono);
-  font-size: 10px;
-  color: var(--vs-text-2);
-}
-
-/* ---- Transcript ---- */
-
-.vsd-transcript {
-  display: flex;
-  flex-direction: column;
-  gap: 4px;
-}
-
-.vsd-line {
-  display: grid;
-  grid-template-columns: 52px minmax(0, 1fr);
-  gap: 12px;
-  align-items: baseline;
-  padding: 9px 12px;
-  border-radius: 8px;
-  transition: background-color 0.3s ease;
-}
-
-.vsd-line[data-on] { background: var(--vs-card); }
-
-.vsd-line__time {
-  font-family: var(--vs-mono);
-  font-size: 11px;
-  color: var(--vs-text-2);
-  opacity: 0.4;
-  transition: opacity 0.3s ease;
-}
-
-.vsd-line[data-on] .vsd-line__time { opacity: 1; }
-
-.vsd-line__text {
-  font-size: 13px;
-  line-height: 1.4;
-  color: var(--vs-text);
-}
-
-/* ---- Browser downloads popover ---- */
-
-.vsd-downloads {
-  position: absolute;
-  z-index: 10;
-  top: 8px;
-  right: 10px;
-  width: 290px;
-  padding: 12px;
-  border-radius: 12px;
-  --ss-popover-bg: var(--vs-card);
-}
-
-.vsd-downloads__row {
-  display: flex;
-  align-items: center;
-  gap: 12px;
-}
-
-.vsd-downloads__icon {
-  display: grid;
-  place-items: center;
-  flex: none;
-  width: 36px;
-  height: 36px;
-  border-radius: 8px;
-  background: var(--vs-brand-10);
-  color: var(--vs-brand);
-}
-
-.vsd-downloads__text {
-  display: flex;
-  flex-direction: column;
-  gap: 4px;
-  min-width: 0;
-}
-
-.vsd-downloads__name {
-  font-size: 13px;
-  line-height: 1.3;
-  color: var(--vs-text);
-}
-
-.vsd-downloads__sub {
-  font-size: 11px;
-  line-height: 1.3;
-  color: var(--vs-text-2);
-}
-
-/* ---- The app's own header ---- */
-
-.vsd-page { max-width: 680px; }
-
-.vsd-hero {
-  display: flex;
-  flex-direction: column;
-  gap: 6px;
-  padding: 2px 0 16px;
-}
-
-.vsd-hero__by {
-  font-size: 10px;
-  font-weight: 400;
-  text-transform: uppercase;
-  letter-spacing: 0.08em;
-  color: var(--vs-text-2);
-}
-
-.vsd-hero__title {
-  font-family: 'Macklin Text', Georgia, serif;
-  font-size: 30px;
-  line-height: 1.1;
-  letter-spacing: -0.02em;
-  color: var(--vs-text);
-}
-
-.vsd-hero__sub {
-  font-size: 13px;
-  font-weight: 400;
-  color: var(--vs-text-2);
-}
-
-/* ---- The archive on the desktop: the payoff ---- */
+/* ---- The ZIP on the desktop ---- */
 
 .vsd-zip {
   will-change: transform;
@@ -803,12 +337,7 @@
   transform: translateY(10px) scale(0.96);
   transition: opacity 0.5s cubic-bezier(0.25, 0.8, 0.25, 1), transform 0.8s cubic-bezier(0.25, 0.8, 0.25, 1);
 }
-
-.vsd-zip[data-on] {
-  opacity: 1;
-  transform: none;
-}
-
+.vsd-zip[data-on] { opacity: 1; transform: none; }
 .vsd-zip__tile {
   display: flex;
   flex-direction: column;
@@ -818,18 +347,9 @@
   background: var(--vs-card);
   color: var(--vs-brand);
 }
-
-.vsd-zip__count {
-  font-size: 9.5px;
-  line-height: 1.2;
-  color: var(--vs-text-2);
-}
-
-.vsd-zip-icon { width: 14px; height: 14px; }
-
-/* Buttons whose label changes keep one width, so nothing beside them moves */
-.vsd .vsd-btn--extract { min-width: 0; }
-.vsd .vsd-btn--zip { min-width: 148px; }
+.vsd-zip__count { font-size: 9.5px; line-height: 1.2; color: var(--vs-text-2); }
+.vsd .ss-stage[data-layout='compact'] .vsd-zip__count { display: none; }
+.vsd .vsd-desk__name { max-width: 124px; overflow: hidden; text-overflow: ellipsis; }
 
 /* Compact: the page on its own panel, no browser chrome */
 .vsd-mobile {
@@ -838,12 +358,12 @@
   border: 1px solid var(--vs-border);
   background: var(--vs-bg);
 }
+.vsd-mobile > .vsd-body { position: absolute; inset: 0; }
 
-.vsd-mobile > .vsd-body {
-  position: absolute;
-  inset: 0;
+@media (prefers-reduced-motion: reduce) {
+  .vsd-page, .vsd-screen, .vsd-swap__item, .vsd-panels > *, .vsd .vsd-tile, .vsd-panel__swap { transition: none !important; }
 }
 
-.vsd .ss-stage[data-layout='compact'] .vsd-zip__count { display: none; }
-.vsd .vsd-btn--zip { --ss-button-pad-icon: 16px; }
-.vsd-work[data-compact] .vsd-params__foot { grid-template-columns: minmax(0, 0.85fr) minmax(0, 1.5fr); }
+.vsd .stepper__value { display: grid; place-items: center; white-space: nowrap; }
+.vsd .tx__lines { list-style: none; margin: 0; padding: 0; }
+.vsd .vsd-tiles { list-style: none; margin: 0; padding-left: 0; }
