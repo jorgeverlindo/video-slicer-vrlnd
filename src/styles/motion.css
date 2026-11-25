@@ -32,6 +32,7 @@
   --stagger:       50ms;   /* siblings in one sequence */
   --stagger-tight: 30ms;   /* long lists (result tiles) */
   --lead:          120ms;  /* first step after the page paints */
+  --relay-step:    480ms;  /* hero relay (dark): one card per beat, the clip fills it */
   --stagger-deal:  60ms;   /* home pieces leave a beat apart, settle together */
 
   /* Distance */
