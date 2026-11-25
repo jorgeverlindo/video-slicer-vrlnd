@@ -111,8 +111,8 @@ const LEAN_PER_VX = 6   // deg of lean per px/ms of horizontal speed
 const LEAN_MAX = 6      // deg
 const THROW_MS = 120    // release momentum: project velocity this far ahead
 
-// Live hero (dark theme only; light and reduced motion keep the stills).
-// One clip (public/hero/trajectory-full.mp4) across the pile, each card its
+// Live hero (reduced motion keeps the stills). One clip per theme
+// (public/hero/trajectory-full-{light,dark}.mp4) across the pile, each card its
 // own stretch at normal speed: #004 frame 0 → 1, #009 1 → 2, #013 2 → 3,
 // each starting the moment its card leaves. Cards fade 0 → 100 % over their
 // flight and land --relay-step apart; each freezes on its end, once.
@@ -123,10 +123,18 @@ function useRelay(
   videos: React.MutableRefObject<(HTMLVideoElement | null)[]>,
   cards: React.MutableRefObject<(HTMLElement | null)[]>,
   on: boolean,
+  theme: 'light' | 'dark',
 ) {
+  const played = useRef(false)
   useEffect(() => {
     if (!on) return
     const vs = videos.current, els = cards.current
+    // Theme switched after the relay ran: the new clip just shows the same
+    // three frozen frames, no replay
+    if (played.current) {
+      vs.forEach((v, i) => { if (v) { v.pause(); v.currentTime = RELAY[i + 1] - FRAME } })
+      return
+    }
     let raf = 0, alive = true
     // Every card waits on the first frame of its stretch
     vs.forEach((v, i) => { if (v) { v.pause(); v.playbackRate = 1; v.currentTime = RELAY[i] } })
@@ -149,6 +157,7 @@ function useRelay(
       if (!alive) return
       // First visit: the deal is held until the faces load (main.tsx)
       if (html.classList.contains('intro') && !html.classList.contains('intro-run')) { raf = requestAnimationFrame(start); return }
+      played.current = true
       // Follow each card's own deal animation, so video and flight share a clock
       els.forEach((el, i) => {
         const deal = el?.getAnimations().find((a) => (a as CSSAnimation).animationName === 'still-deal')
@@ -158,19 +167,19 @@ function useRelay(
     }
     raf = requestAnimationFrame(start)
     return () => { alive = false; cancelAnimationFrame(raf); vs.forEach((v) => v?.pause()) }
-  }, [videos, cards, on])
+  }, [videos, cards, on, theme])
 }
 
 type Drag = { i: number; sx: number; sy: number; ox: number; oy: number; lx: number; ly: number; lt: number; vx: number; vy: number }
 
 function HeroStills({ theme }: { theme: 'light' | 'dark' }) {
-  // Dark theme: the clip relays across the cards (useRelay); the dark still
-  // stays underneath as the poster. Light theme and reduced motion: stills.
-  const live = theme === 'dark' && !prefersReducedMotion()
+  // The theme's clip relays across the cards (useRelay); the theme's still
+  // stays underneath as the poster. Reduced motion: stills only.
+  const live = !prefersReducedMotion()
   const videos = useRef<(HTMLVideoElement | null)[]>([])
   const box = useRef<HTMLDivElement>(null)
   const cards = useRef<(HTMLElement | null)[]>([])
-  useRelay(videos, cards, live)
+  useRelay(videos, cards, live, theme)
   const pos = useRef(TRAJECTORY.map(() => ({ x: 0, y: 0 })))
   const drag = useRef<Drag | null>(null)
   const [stack, setStack] = useState<number[]>(TRAJECTORY.map((_, i) => i)) // last = on top
@@ -233,12 +242,13 @@ function HeroStills({ theme }: { theme: 'light' | 'dark' }) {
             <img className="still__img still__img--light" src={`/hero/trajectory-${c.n}-light.webp`} alt="" width={960} height={540} decoding="async" draggable={false} />
             <img className="still__img still__img--dark" src={`/hero/trajectory-${c.n}-dark.webp`} alt="" width={960} height={540} decoding="async" draggable={false} />
             {live && (
-              <video className="still__video" ref={(el) => { videos.current[i] = el }} src="/hero/trajectory-full.mp4" width={960} height={540}
+              <video key={theme} className="still__video" ref={(el) => { videos.current[i] = el }} src={`/hero/trajectory-full-${theme}.mp4`} width={960} height={540}
                 muted playsInline preload="auto" disablePictureInPicture
                 // Reveal on the first decoded frame, whatever brings it: card #004
                 // starts at 0, so it never seeks and 'seeked' alone left it hidden
                 // (the still showed through, then the video popped in at the end)
-                onLoadedData={(e) => { e.currentTarget.dataset.playing = '' }}
+                // (and not mid-seek: after a theme switch it shows its frozen frame, not 0)
+                onLoadedData={(e) => { if (!e.currentTarget.seeking) e.currentTarget.dataset.playing = '' }}
                 onSeeked={(e) => { e.currentTarget.dataset.playing = '' }} />
             )}
           </span>
