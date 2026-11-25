@@ -225,7 +225,6 @@ function SettingsPanel(p: Props & { native: boolean; ready: boolean; frameBytes:
     <div className="panel__body">
       <header className="panel__head">
         <h2 className="t-title-m">How should we slice it?</h2>
-        <p className="t-caption c-subtle">Pick a rhythm. You can change it before extracting.</p>
       </header>
 
       <fieldset className="presets">
