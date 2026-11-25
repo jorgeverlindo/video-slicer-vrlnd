@@ -60,6 +60,12 @@ html.intro-run .topbar.enter { animation: fade-in var(--dur-entrance) var(--ease
 }
 html.intro:not(.intro-run) .home .enter,
 html.intro:not(.intro-run) .still { animation: none; opacity: 0; }
+/* Relay (dark hero): the pile is built card by card by the clip itself
+   (Home.tsx useRelay). A card waits hidden until it's dealt (data-go), then
+   deals with no stagger and its full flight. */
+.stills[data-relay] .still:not([data-go]) { animation: none; opacity: 0; }
+.stills[data-relay] .still { --deal-at: 0ms; --deal-dur: var(--dur-land); }
+.stills[data-relay] .still:first-child { --deal-at: var(--lead); } /* #004 keeps the copy's beat */
 
 /* ── S1 Home ── */
 .home {
