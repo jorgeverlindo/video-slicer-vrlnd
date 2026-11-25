@@ -13,6 +13,13 @@
         var t = localStorage.getItem('framestack-theme');
         if (t !== 'light' && t !== 'dark') t = matchMedia('(prefers-color-scheme: dark)').matches ? 'dark' : 'light';
         document.documentElement.setAttribute('framestack-theme', t);
+        // Hero trajectory stills for this theme, so they're in before the
+        // cards deal in. Names must match TRAJECTORY in stages/Home.tsx.
+        ['01', '02', '03'].forEach(function (n) {
+          var l = document.createElement('link');
+          l.rel = 'preload'; l.as = 'image'; l.href = '/hero/trajectory-' + n + '-' + t + '.webp';
+          document.head.appendChild(l);
+        });
       } catch (e) {}
     </script>
 

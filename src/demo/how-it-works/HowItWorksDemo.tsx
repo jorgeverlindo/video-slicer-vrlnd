@@ -330,7 +330,7 @@ function Browser({ layout, style, children }: { layout: Layout; style: React.CSS
     )
   }
   return (
-    <Window className="vsd-win" url="frame-slicer.vercel.app" urlShape="pill" style={style} body={{ className: 'vsd-body' }}>
+    <Window className="vsd-win" url="videoslicer.jorgeverlindo.design" urlShape="pill" style={style} body={{ className: 'vsd-body' }}>
       {children}
     </Window>
   )

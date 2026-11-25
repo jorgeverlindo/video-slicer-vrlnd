@@ -1,100 +1,244 @@
-/* ── Jorge Verlindo Design Tokens ───────────────────────────────────────── */
-/* Same attribute key used by the Framer ThemeToggle component               */
+/* ── Jorge Verlindo · Video Slicer design tokens ──────────────────────────────
+   Mirrors the Figma variable collections in file h0aoaJ6qfjJDAweYhTSAzL:
+   "Video Slicer" (color, Dark/Light), "Typography" and "Spacing".
+   Names follow the Figma variable path: color/text-subtle → --c-text-subtle.
+   The theme attribute is the same one the portfolio's ThemeToggle writes.
+   Components reference these tokens only; no literals in component CSS. */
+
 :root,
 [framestack-theme="light"] {
-  /* Brand — warm brown (Primary-brown from portfolio) */
-  --brand:               rgb(70, 67, 62);
-  --brand-hover:         rgb(52, 50, 46);
-  --brand-active:        rgb(36, 34, 32);
-  --brand-tint:          rgb(245, 242, 237);   /* Portfolio-card */
-  --brand-06:            rgba(70, 67, 62, 0.06);
-  --brand-10:            rgba(70, 67, 62, 0.10);
-  --brand-18:            rgba(70, 67, 62, 0.18);
-  --brand-35:            rgba(70, 67, 62, 0.35);
-  --code-accent:         rgb(158, 129, 112);   /* Primary-Brown D */
+  color-scheme: light;
 
-  /* App */
-  --app-bg:              rgb(247, 240, 235);   /* /BG light */
-  --white:               rgb(245, 242, 237);   /* /Portfolio-card light */
+  /* Color — semantic (Figma "Video Slicer" / Light) */
+  --c-bg:              rgb(247 240 235);
+  --c-bg-0:            rgb(247 240 235 / 0);
+  --c-surface:         rgb(245 242 237);
+  --c-surface-0:       rgb(245 242 237 / 0);
+  --c-surface-raised:  rgb(255 255 255);
+  --c-brand:           rgb(70 67 62);
+  --c-brand-hover:     rgb(52 50 46);
+  --c-brand-10:        rgb(70 67 62 / 0.10);
+  --c-brand-18:        rgb(70 67 62 / 0.18);
+  --c-brand-35:        rgb(70 67 62 / 0.35);
+  --c-on-brand:        rgb(245 242 237);
+  --c-accent:          rgb(158 129 112);
+  --c-text-primary:    rgb(0 0 0 / 0.85);
+  --c-text-secondary:  rgb(0 0 0 / 0.67);
+  --c-text-subtle:     rgb(0 0 0 / 0.60);   /* captions; AA on bg and surface */
+  --c-text-muted:      rgb(0 0 0 / 0.50);   /* placeholders only */
+  --c-link:            rgb(70 67 62);
+  --c-border:          rgb(0 0 0 / 0.10);
+  --c-gray-100:        rgb(70 67 62 / 0.07);
+  --c-gray-150:        rgb(70 67 62 / 0.11);
+  --c-paper:           rgb(255 255 255);
+  --c-ink:             rgb(0 0 0 / 0.85);
+  --c-ink-secondary:   rgb(0 0 0 / 0.55);
+  --c-ink-muted:       rgb(0 0 0 / 0.40);
+  --c-success:         rgb(27 94 32);
+  --c-danger:          rgb(168 44 32);
+  --c-danger-10:       rgb(168 44 32 / 0.08);
+  --c-scrim:           rgb(0 0 0 / 0.45);
+  --c-scrim-0:         rgb(0 0 0 / 0);
+  --c-scrim-strong:    rgb(18 15 13 / 0.78);
+  --c-on-media:        rgb(255 255 255 / 0.92);
+  --c-playhead:        rgb(28 25 23);          /* ink on paper */
+  --c-playhead-halo:   rgb(255 255 255 / 0.85);
+  --c-on-media-10:     rgb(255 255 255 / 0.12);
+  --c-media:           rgb(12 10 9);
 
-  /* Text */
-  --text-primary:        rgba(0, 0, 0, 0.85);  /* /Text-primary light */
-  --text-secondary:      rgba(0, 0, 0, 0.67);  /* /text-secondary light */
-  --text-placeholder:    rgba(0, 0, 0, 0.40);
-  --text-muted:          rgba(0, 0, 0, 0.50);
+  /* Elevation */
+  --shadow-card:   0 1px 2px rgb(70 67 62 / 0.08), 0 8px 24px rgb(70 67 62 / 0.08);
+  --shadow-float:  0 2px 6px rgb(70 67 62 / 0.10), 0 24px 56px rgb(70 67 62 / 0.18);
+  --shadow-lift:   0 4px 10px rgb(70 67 62 / 0.14), 0 36px 72px rgb(70 67 62 / 0.26);
+  --focus-ring:    0 0 0 3px var(--c-brand-35);
 
-  /* Neutral warm grays */
-  --gray-50:             rgba(70, 67, 62, 0.05);
-  --gray-100:            rgba(70, 67, 62, 0.07);
-  --gray-150:            rgba(70, 67, 62, 0.11);
-  --gray-200:            rgba(70, 67, 62, 0.09);
-  --gray-border:         rgba(70, 67, 62, 0.18);
-
-  /* Borders & shadows */
-  --border:              rgba(0, 0, 0, 0.10);  /* /Stroke D */
-  --shadow-xs:           0px 2px 4px 0px rgba(70, 67, 62, 0.10);
-  --shadow-sm:           0 2px 8px rgba(70, 67, 62, 0.12);
-  --shadow-md:           0 4px 16px rgba(70, 67, 62, 0.15);
-  --shadow-elev2:        0px 1px 5px 0px rgba(70,67,62,0.10), 0px 2px 2px 0px rgba(70,67,62,0.12), 0px 3px 1px -2px rgba(70,67,62,0.18);
-  --shadow-brand-soft:   0 4px 16px rgba(70, 67, 62, 0.18); /* /Shadow */
-  --shadow-focus-ring:   0 0 0 3px rgba(70, 67, 62, 0.18);
-
-  /* Semantic */
-  --success-bg:          #edf7ed;
-  --success-fg:          #1b5e20;
-  --success-icon:        #4CAF50;
-  --destructive:         #d4183d;
-  --destructive-bg:      rgba(212, 24, 61, 0.04);
-  --destructive-border:  rgba(212, 24, 61, 0.20);
-
-  /* Radius — slightly softer, editorial feel */
-  --radius-xs:           2px;
-  --radius-sm:           4px;
-  --radius-md:           6px;
-  --radius-lg:           8px;
-  --radius-card:         14px;
-  --radius-btn:          14px;
-  --radius-xl:           12px;
-  --radius-pill:         100px;
-  --radius-full:         9999px;
-
-  /* Transitions */
-  --t-fast:              150ms ease;
-  --t-default:           200ms cubic-bezier(0.4, 0, 0.2, 1);
-  --t-spring:            300ms cubic-bezier(0.34, 1.56, 0.64, 1);
+  /* ── Legacy aliases — used only by the How it works demo kit (src/demo) ── */
+  --brand: var(--c-brand);
+  --brand-hover: var(--c-brand-hover);
+  --brand-active: rgb(36 34 32);
+  --brand-tint: var(--c-surface);
+  --brand-06: rgb(70 67 62 / 0.06);
+  --brand-10: var(--c-brand-10);
+  --brand-18: var(--c-brand-18);
+  --brand-35: var(--c-brand-35);
+  --code-accent: var(--c-accent);
+  --app-bg: var(--c-bg);
+  --white: var(--c-surface);
+  --text-primary: var(--c-text-primary);
+  --text-secondary: var(--c-text-secondary);
+  --text-placeholder: rgb(0 0 0 / 0.40);
+  --text-muted: var(--c-text-muted);
+  --gray-50: rgb(70 67 62 / 0.05);
+  --gray-100: var(--c-gray-100);
+  --gray-150: var(--c-gray-150);
+  --gray-200: rgb(70 67 62 / 0.09);
+  --gray-border: rgb(70 67 62 / 0.18);
+  --border: var(--c-border);
+  --shadow-xs: 0 2px 4px rgb(70 67 62 / 0.10);
+  --shadow-sm: 0 2px 8px rgb(70 67 62 / 0.12);
+  --shadow-md: 0 4px 16px rgb(70 67 62 / 0.15);
+  --shadow-focus-ring: var(--focus-ring);
+  --success-icon: rgb(76 175 80);
+  --destructive: var(--c-danger);
+  --destructive-bg: var(--c-danger-10);
+  --radius-card: 14px;
+  --radius-pill: 100px;
+  --t-fast: 150ms ease;
+  --t-default: 200ms cubic-bezier(0.4, 0, 0.2, 1);
 }
 
-/* ── Dark mode — mirrors Framer portfolio /BG dark, /Primary-brown dark etc */
 [framestack-theme="dark"] {
-  --brand:               rgb(158, 129, 112);   /* /Primary-brown dark */
-  --brand-hover:         rgb(180, 150, 130);
-  --brand-active:        rgb(200, 170, 150);
-  --brand-tint:          rgb(36, 34, 32);      /* /Portfolio-card dark */
-  --brand-06:            rgba(158, 129, 112, 0.06);
-  --brand-10:            rgba(158, 129, 112, 0.10);
-  --brand-18:            rgba(158, 129, 112, 0.18);
-  --brand-35:            rgba(158, 129, 112, 0.35);
-  --code-accent:         rgb(245, 241, 237);
+  color-scheme: dark;
 
-  --app-bg:              rgb(28, 25, 23);      /* /BG dark */
-  --white:               rgb(36, 34, 32);      /* /Portfolio-card dark */
+  /* Color — semantic (Figma "Video Slicer" / Dark) */
+  --c-bg:              rgb(28 25 23);
+  --c-bg-0:            rgb(28 25 23 / 0);
+  --c-surface:         rgb(36 34 32);
+  --c-surface-0:       rgb(36 34 32 / 0);
+  --c-surface-raised:  rgb(46 43 40);
+  --c-brand:           rgb(158 129 112);
+  --c-brand-hover:     rgb(180 150 130);
+  --c-brand-10:        rgb(158 129 112 / 0.10);
+  --c-brand-18:        rgb(158 129 112 / 0.18);
+  --c-brand-35:        rgb(158 129 112 / 0.35);
+  --c-on-brand:        rgb(28 25 23);
+  --c-accent:          rgb(158 129 112);
+  --c-text-primary:    rgb(245 241 237 / 0.85);
+  --c-text-secondary:  rgb(184 176 168 / 0.67);
+  --c-text-subtle:     rgb(184 176 168 / 0.80);
+  --c-text-muted:      rgb(184 176 168 / 0.50);
+  --c-link:            rgb(180 150 130);
+  --c-border:          rgb(255 255 255 / 0.10);
+  --c-gray-100:        rgb(158 129 112 / 0.09);
+  --c-gray-150:        rgb(158 129 112 / 0.14);
+  --c-paper:           rgb(245 242 237);
+  --c-ink:             rgb(0 0 0 / 0.85);
+  --c-ink-secondary:   rgb(0 0 0 / 0.55);
+  --c-ink-muted:       rgb(0 0 0 / 0.40);
+  --c-success:         rgb(76 175 80);
+  --c-danger:          rgb(236 128 112);
+  --c-danger-10:       rgb(236 128 112 / 0.10);
+  --c-scrim:           rgb(0 0 0 / 0.55);
+  --c-scrim-0:         rgb(0 0 0 / 0);
+  --c-scrim-strong:    rgb(18 15 13 / 0.78);
+  --c-on-media:        rgb(255 255 255 / 0.92);
+  --c-playhead:        rgb(245 242 237);
+  --c-playhead-halo:   rgb(0 0 0 / 0.55);
+  --c-on-media-10:     rgb(255 255 255 / 0.12);
+  --c-media:           rgb(12 10 9);
 
-  --text-primary:        rgba(245, 241, 237, 0.85);  /* /Text-primary dark */
-  --text-secondary:      rgba(184, 176, 168, 0.67);  /* /text-secondary dark */
-  --text-placeholder:    rgba(184, 176, 168, 0.40);
-  --text-muted:          rgba(184, 176, 168, 0.50);
+  --shadow-card:   0 1px 2px rgb(0 0 0 / 0.25), 0 8px 24px rgb(0 0 0 / 0.25);
+  --shadow-float:  0 2px 6px rgb(0 0 0 / 0.30), 0 24px 56px rgb(0 0 0 / 0.45);
+  --shadow-lift:   0 4px 10px rgb(0 0 0 / 0.40), 0 36px 72px rgb(0 0 0 / 0.60);
 
-  --gray-50:             rgba(158, 129, 112, 0.06);
-  --gray-100:            rgba(158, 129, 112, 0.09);
-  --gray-150:            rgba(158, 129, 112, 0.14);
-  --gray-200:            rgba(158, 129, 112, 0.10);
-  --gray-border:         rgba(158, 129, 112, 0.22);
+  /* Legacy aliases that differ in dark */
+  --brand-active: rgb(200 170 150);
+  --brand-06: rgb(158 129 112 / 0.06);
+  --text-placeholder: rgb(184 176 168 / 0.40);
+  --gray-50: rgb(158 129 112 / 0.06);
+  --gray-200: rgb(158 129 112 / 0.10);
+  --gray-border: rgb(158 129 112 / 0.22);
+  --shadow-xs: 0 2px 4px rgb(28 27 26 / 0.25);
+  --shadow-sm: 0 2px 8px rgb(28 27 26 / 0.30);
+  --shadow-md: 0 4px 16px rgb(28 27 26 / 0.40);
+}
 
-  --border:              rgba(255, 255, 255, 0.10); /* /Stroke D dark */
-  --shadow-xs:           0px 2px 4px 0px rgba(28, 27, 26, 0.25);
-  --shadow-sm:           0 2px 8px rgba(28, 27, 26, 0.30);
-  --shadow-md:           0 4px 16px rgba(28, 27, 26, 0.40);
-  --shadow-elev2:        0px 1px 5px 0px rgba(28,27,26,0.25), 0px 2px 2px 0px rgba(28,27,26,0.30);
-  --shadow-brand-soft:   0 4px 16px rgba(28, 27, 26, 0.35);
-  --shadow-focus-ring:   0 0 0 3px rgba(158, 129, 112, 0.25);
+:root {
+  /* Typography — Figma "Typography" collection */
+  --font-serif: 'Macklin Text', Georgia, serif;
+  --font-sans:  'Macklin Sans', system-ui, sans-serif;
+  --font-mono:  'Fragment Mono', ui-monospace, monospace;
+
+  --weight-light:   300;
+  --weight-regular: 400;
+  --weight-medium:  500; /* Macklin Sans Medium, self-hosted */
+
+  --fs-display-xl: 72px;  --lh-display-xl: 71px;  --ls-display-xl: -0.025em;
+  --fs-display-l:  64px;  --lh-display-l:  65px;  --ls-display-l:  -0.02em;
+  --fs-title-m:    32px;  --lh-title-m:    38px;  --ls-title-m:    -0.01em;
+  --fs-title-s:    22px;  --lh-title-s:    29px;  --ls-title-s:    -0.005em;
+  --fs-transcript: 18px;  --lh-transcript: 29px;
+  --fs-body-l:     18px;  --lh-body-l:     27px;
+  --fs-body-m:     15px;  --lh-body-m:     22px;
+  --fs-label-l:    15px;  --lh-label-l:    18px;
+  --fs-label-m:    14px;  --lh-label-m:    17px;
+  --fs-label-s:    12px;  --lh-label-s:    14px;  --ls-label-s: 0.005em;
+  --fs-caption:    13px;  --lh-caption:    18px;
+  --fs-mono-l:     16px;  --lh-mono-l:     21px;
+  --fs-mono-m:     14px;  --lh-mono-m:     18px;
+  --fs-mono-s:     12px;  --lh-mono-s:     16px;
+  /* Phone-only step for the hero (not in Figma; Figma has no phone frames yet) */
+  --fs-display-s:  44px;  --lh-display-s:  46px;
+
+  /* Spacing — Figma "Spacing" collection */
+  --space-3xs: 2px;
+  --space-2xs: 4px;
+  --space-xs:  8px;
+  --space-s:   12px;
+  --space-m:   16px;
+  --space-l:   24px;
+  --space-xl:  32px;
+  --space-2xl: 40px;
+  --space-3xl: 48px;
+  --space-4xl: 64px;
+  --space-5xl: 80px;
+
+  --radius-xs:   4px;
+  --radius-s:    8px;
+  --radius-m:    12px;
+  --radius-l:    16px;
+  --radius-xl:   24px;
+  --radius-full: 999px;
+
+  /* Sizes */
+  --size-target:    40px;  /* minimum hit area (Practical UI) */
+  --size-target-l:  48px;
+  --size-icon-s:    16px;
+  --size-icon-m:    20px;
+  --size-logo:      32px;
+  --page-max:       1360px;
+  --topbar-h:       72px;
+  --panel-w:        440px;
+  --size-step:      24px;  /* step-number disc in the topbar */
+  --size-step-l:    28px;  /* step-number disc in the modal */
+  --size-pin:       20px;  /* mark pin, numbered badge */
+  --size-check:     24px;  /* tile selection disc */
+  --size-ring:      64px;  /* converter spinner well */
+  --size-control-s: 32px;  /* compact select, segmented */
+  --size-paste-btn: 88px;
+  --size-mark-thumb: 56px;
+
+  --size-toggle-w:  36px;
+  --size-toggle-h:  20px;
+  --size-knob:      14px;
+  --size-pill:      34px;
+  --size-stepper-v: 64px;
+  --size-progress:  4px;
+  --size-spinner-l: 24px;
+
+  /* Strokes */
+  --stroke-s: 1px;
+  --stroke-m: 1.5px;
+  --stroke-l: 2px;
+  --underline-offset: 4px;
+
+  --menu-w:         240px; /* dropdown menus, at least */
+
+  /* Layout measures */
+  --measure:        560px; /* Figma S1 lede: two lines at Body L */
+  --measure-s:      360px;
+  --modal-w:        880px;
+  --errpage-w:      760px;
+  --tile-min:       300px; /* Figma S5: 4 columns at 1440 */
+  --ratio-w:        240px;
+  --stills-h:       480px;
+  --stills-h-s:     300px;
+  --filmstrip-h:    60px;
+  --filmstrip-ruler-h: 20px;
+  --size-tick:      10px;
+  --size-scrub-knob: 14px;
+  --player-scrim-h: 96px;
+  --marks-max-h:    240px;
+  --tx-max-h:       560px;
+  --tx-time-w:      56px;
 }
