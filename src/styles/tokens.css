@@ -156,20 +156,21 @@
   --weight-regular: 400;
   --weight-medium:  500; /* Macklin Sans Medium, self-hosted */
 
+  /* UI tier set from Caption 15 (was 13, ×1.154); displays kept as in Figma */
   --fs-display-xl: 72px;  --lh-display-xl: 71px;  --ls-display-xl: -0.025em;
   --fs-display-l:  64px;  --lh-display-l:  65px;  --ls-display-l:  -0.02em;
-  --fs-title-m:    32px;  --lh-title-m:    38px;  --ls-title-m:    -0.01em;
-  --fs-title-s:    22px;  --lh-title-s:    29px;  --ls-title-s:    -0.005em;
-  --fs-transcript: 18px;  --lh-transcript: 29px;
-  --fs-body-l:     18px;  --lh-body-l:     27px;
-  --fs-body-m:     15px;  --lh-body-m:     22px;
-  --fs-label-l:    15px;  --lh-label-l:    18px;
-  --fs-label-m:    14px;  --lh-label-m:    17px;
-  --fs-label-s:    12px;  --lh-label-s:    14px;  --ls-label-s: 0.005em;
-  --fs-caption:    13px;  --lh-caption:    18px;
-  --fs-mono-l:     16px;  --lh-mono-l:     21px;
-  --fs-mono-m:     14px;  --lh-mono-m:     18px;
-  --fs-mono-s:     12px;  --lh-mono-s:     16px;
+  --fs-title-m:    37px;  --lh-title-m:    44px;  --ls-title-m:    -0.01em;
+  --fs-title-s:    25px;  --lh-title-s:    33px;  --ls-title-s:    -0.005em;
+  --fs-transcript: 21px;  --lh-transcript: 33px;
+  --fs-body-l:     21px;  --lh-body-l:     31px;
+  --fs-body-m:     17px;  --lh-body-m:     25px;
+  --fs-label-l:    17px;  --lh-label-l:    21px;
+  --fs-label-m:    16px;  --lh-label-m:    20px;
+  --fs-label-s:    14px;  --lh-label-s:    17px;  --ls-label-s: 0.005em;
+  --fs-caption:    15px;  --lh-caption:    21px;
+  --fs-mono-l:     18px;  --lh-mono-l:     24px;
+  --fs-mono-m:     16px;  --lh-mono-m:     21px;
+  --fs-mono-s:     14px;  --lh-mono-s:     18px;
   /* Phone-only step for the hero (not in Figma; Figma has no phone frames yet) */
   --fs-display-s:  44px;  --lh-display-s:  46px;
 
@@ -199,7 +200,7 @@
   --size-icon-s:    16px;
   --size-icon-m:    20px;
   --size-logo:      32px;
-  --page-max:       1360px;
+  --page-max:       1400px;
   --topbar-h:       72px;
   --panel-w:        440px;
   --size-step:      24px;  /* step-number disc in the topbar */
@@ -245,3 +246,4 @@
   --tx-max-h:       560px;
   --tx-time-w:      56px;
 }
+

@@ -256,7 +256,7 @@ html.intro:not(.intro-run) .still { animation: none; opacity: 0; }
 .panel__body { flex: 1; display: flex; flex-direction: column; gap: var(--space-l); }
 .panel__head { display: grid; gap: var(--space-xs); }
 .panel__rows { display: flex; flex-direction: column; gap: var(--space-l); }
-.panel__action { margin-top: auto; display: grid; gap: var(--space-xs); justify-items: center; text-align: center; }
+.panel__action { margin-top: auto; padding-top: var(--space-l); border-top: var(--stroke-s) solid var(--c-border); display: grid; gap: var(--space-xs); justify-items: center; text-align: center; }
 
 .marks__head { display: flex; justify-content: space-between; align-items: baseline; }
 .marks { display: flex; flex-direction: column; gap: var(--space-xs); max-height: var(--marks-max-h); overflow: auto; }
@@ -268,7 +268,12 @@ html.intro:not(.intro-run) .still { animation: none; opacity: 0; }
 .mark img { width: 100%; aspect-ratio: 16 / 9; object-fit: cover; border-radius: var(--radius-xs); }
 .mark__n { display: grid; place-items: center; width: var(--size-pin); height: var(--size-pin); border-radius: 50%; background: var(--c-brand); color: var(--c-on-brand); }
 .marks__empty { padding: var(--space-m); border-radius: var(--radius-m); background: var(--c-gray-100); text-align: center; }
-.tx-start { display: flex; flex-direction: column; align-items: flex-start; gap: var(--space-s); }
+.tx-section { display: grid; gap: var(--space-s); }
+.tx-options {
+  display: grid; gap: var(--space-s); padding: var(--space-s) var(--space-m) var(--space-m);
+  border-radius: var(--radius-l); background: var(--c-gray-100);
+  animation: rise-in var(--dur-dropdown) var(--ease-out) backwards;
+}
 .tx-line { display: flex; align-items: center; gap: var(--space-xs); color: var(--c-brand); }
 
 /* S4 processing */

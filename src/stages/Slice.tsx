@@ -293,20 +293,25 @@ function SettingsPanel(p: Props & { native: boolean; ready: boolean; frameBytes:
           <span className="field__hint">{p.frameBytes ? `JPEG, about ${fmtBytes(p.frameBytes)} per frame` : 'JPEG'}</span>
         </div>
 
-        <div className="field">
-          {/* Figma S2: toggle leads, language sits at the end of the same row */}
-          <div className="setting setting--lead">
-            <Toggle checked={p.transcript.enabled} onChange={p.onTranscribe} label="Transcribe audio" />
-            <div className="setting__text">
-              <span className="setting__label">Transcribe audio</span>
-              <span className="setting__hint">Runs on your device</span>
-            </div>
-            <Select label="Transcript language" value={p.transcript.lang} onChange={(v) => p.onLang(v as TranscriptLang)}
-              disabled={!p.transcript.enabled} options={LANGUAGES} />
-          </div>
-          {p.transcript.enabled && <TranscriptStatusLine t={p.transcript} onStart={p.onStartTranscript} />}
-        </div>
       </div>
+
+      {/* Transcript: its own sector. Same row grammar as the settings above
+          (label left, control right); its options only exist once it's on,
+          grouped in one inset so language, cost and Start read as one unit. */}
+      <hr className="divider" />
+      <section className="tx-section" aria-label="Transcript">
+        <Setting label="Transcribe audio" hint="Runs on your device">
+          <Toggle checked={p.transcript.enabled} onChange={p.onTranscribe} label="Transcribe audio" />
+        </Setting>
+        {p.transcript.enabled && (
+          <div className="tx-options">
+            <Setting label="Language" hint={LANGUAGES.find((l) => l.value === p.transcript.lang)?.hint}>
+              <Select label="Transcript language" value={p.transcript.lang} onChange={(v) => p.onLang(v as TranscriptLang)} options={LANGUAGES} />
+            </Setting>
+            <TranscriptStatusLine t={p.transcript} onStart={p.onStartTranscript} />
+          </div>
+        )}
+      </section>
 
       {p.error && <div className="alert alert--error" role="alert"><div className="alert__title">{p.error}</div></div>}
 
@@ -319,24 +324,14 @@ function SettingsPanel(p: Props & { native: boolean; ready: boolean; frameBytes:
 }
 
 function TranscriptStatusLine({ t, onStart }: { t: Transcript; onStart: () => void }) {
-  // Waiting for Start: say what it will cost in the chosen language, then act
-  if (t.status === 'idle') {
-    const hint = t.lang === 'pt'
-      ? 'Portuguese needs a one-time 460 MB download. After that it loads instantly.'
-      : LANGUAGES.find((l) => l.value === t.lang)?.hint
-    return (
-      <div className="tx-start">
-        {hint && <p className="field__hint">{hint}</p>}
-        <button type="button" className="btn btn--secondary" onClick={onStart}>Start transcription</button>
-      </div>
-    )
-  }
+  // Waiting for Start (the cost is on the Language row just above)
+  if (t.status === 'idle') return <button type="button" className="btn btn--secondary btn--block" onClick={onStart}>Start transcription</button>
   if (t.status === 'done') return <p className="field__hint">Transcript ready, {t.result?.chunks?.length ?? 0} lines.</p>
   if (t.status === 'error') return (
-    <div className="tx-start">
+    <>
       <p className="field__error">{t.msg || "We couldn't transcribe this video."}</p>
-      <button type="button" className="btn btn--secondary" onClick={onStart}>Try again</button>
-    </div>
+      <button type="button" className="btn btn--secondary btn--block" onClick={onStart}>Try again</button>
+    </>
   )
   const pct = t.progress
   return (
