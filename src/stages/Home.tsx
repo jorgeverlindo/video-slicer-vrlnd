@@ -111,6 +111,43 @@ const LEAN_PER_VX = 6   // deg of lean per px/ms of horizontal speed
 const LEAN_MAX = 6      // deg
 const THROW_MS = 120    // release momentum: project velocity this far ahead
 
+// Live hero (dark theme only; light and reduced motion keep the stills).
+// Two variants, picked with ?hero=relay|loops while we compare:
+//  · loops — each card loops its own ~1s moment (trajectory-0N.mp4)
+//  · relay — one clip (trajectory-full.mp4) handed card to card: #004 plays
+//    the first beat and freezes on it, #009 picks up from that exact frame,
+//    then #013 runs to the end. Hold, then deal it again.
+type HeroMode = 'relay' | 'loops'
+const heroMode = (): HeroMode => (new URLSearchParams(location.search).get('hero') === 'loops' ? 'loops' : 'relay')
+const RELAY = [0, 1.0, 2.5, 4.0]   // s: card i plays RELAY[i] → RELAY[i+1]
+const RELAY_START_MS = 1100        // after the cards touch down (--lead + --dur-land)
+const RELAY_HOLD_MS = 2600         // all three frozen before the next run
+
+function useRelay(videos: React.MutableRefObject<(HTMLVideoElement | null)[]>, on: boolean) {
+  useEffect(() => {
+    if (!on) return
+    const vs = videos.current
+    let raf = 0, timer = 0, card = -1, alive = true
+    const park = () => vs.forEach((v, i) => { if (v) { v.pause(); v.currentTime = RELAY[i] } })
+    const step = () => {
+      if (!alive) return
+      const v = vs[card]
+      if (v && v.currentTime >= RELAY[card + 1] - 0.02) {
+        v.pause(); v.currentTime = Math.min(RELAY[card + 1] - 1 / 48, v.duration || Infinity) // freeze on its last beat
+        card++
+        if (card >= vs.length) { timer = window.setTimeout(run, RELAY_HOLD_MS); return }
+        vs[card]?.play().catch(() => {})
+      }
+      raf = requestAnimationFrame(step)
+    }
+    const run = () => { park(); card = 0; vs[0]?.play().catch(() => {}); raf = requestAnimationFrame(step) }
+    // Show each card's first frame while waiting, then start after the landing
+    park()
+    timer = window.setTimeout(run, RELAY_START_MS)
+    return () => { alive = false; cancelAnimationFrame(raf); clearTimeout(timer); vs.forEach((v) => v?.pause()) }
+  }, [videos, on])
+}
+
 type Drag = { i: number; sx: number; sy: number; ox: number; oy: number; lx: number; ly: number; lt: number; vx: number; vy: number }
 
 function HeroStills({ theme }: { theme: 'light' | 'dark' }) {
@@ -118,6 +155,9 @@ function HeroStills({ theme }: { theme: 'light' | 'dark' }) {
   // trajectory-0N.mp4, ~140 KB each, end crossfaded into start). The dark
   // still stays underneath as the poster. Light theme and reduced motion: stills.
   const live = theme === 'dark' && !prefersReducedMotion()
+  const mode = heroMode()
+  const videos = useRef<(HTMLVideoElement | null)[]>([])
+  useRelay(videos, live && mode === 'relay')
   const box = useRef<HTMLDivElement>(null)
   const cards = useRef<(HTMLElement | null)[]>([])
   const pos = useRef(TRAJECTORY.map(() => ({ x: 0, y: 0 })))
@@ -181,10 +221,15 @@ function HeroStills({ theme }: { theme: 'light' | 'dark' }) {
           <span className="still__media">
             <img className="still__img still__img--light" src={`/hero/trajectory-${c.n}-light.webp`} alt="" width={960} height={540} decoding="async" draggable={false} />
             <img className="still__img still__img--dark" src={`/hero/trajectory-${c.n}-dark.webp`} alt="" width={960} height={540} decoding="async" draggable={false} />
-            {live && (
+            {live && mode === 'loops' && (
               <video className="still__video" src={`/hero/trajectory-${c.n}.mp4`} width={960} height={540}
                 muted loop autoPlay playsInline preload="auto" disablePictureInPicture
                 onPlaying={(e) => { e.currentTarget.dataset.playing = '' }} />
+            )}
+            {live && mode === 'relay' && (
+              <video className="still__video" ref={(el) => { videos.current[i] = el }} src="/hero/trajectory-full.mp4" width={960} height={540}
+                muted playsInline preload="auto" disablePictureInPicture
+                onSeeked={(e) => { e.currentTarget.dataset.playing = '' }} />
             )}
           </span>
           <figcaption>
