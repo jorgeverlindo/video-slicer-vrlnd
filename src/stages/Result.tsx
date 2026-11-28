@@ -171,7 +171,7 @@ function FramesTab({ frames, onDownload, packing }: { frames: Frame[]; onDownloa
           because selection lives in this tab and clears with Esc or Clear */}
       {picked.length > 0 && (
         <div className="selbar" role="region" aria-label="Selection">
-          <span className="t-label-m">{picked.length} frame{picked.length === 1 ? '' : 's'} selected</span>
+          <span className="t-label-m">{picked.length}<span className="hide-s"> frame{picked.length === 1 ? '' : 's'}</span> selected</span>
           <span className="selbar__rule" aria-hidden="true" />
           <button type="button" className="btn btn--ghost" onClick={() => setSel(new Set())}><Close size={16} /> Clear</button>
           <button type="button" className="btn btn--primary" onClick={() => onDownload(picked)} disabled={packing}>
