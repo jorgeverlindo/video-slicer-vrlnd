@@ -482,6 +482,13 @@ html.intro:not(.intro-run) .still { animation: none; opacity: 0; }
   .steps__item[data-state="current"] .steps__btn .t-label-m { display: inline; }
   .home { grid-template-columns: 1fr; padding: var(--space-2xl) var(--space-l); min-height: 0; }
   .stills { height: var(--stills-h-s); }
+  /* Below the copy the pile spans the full width: narrower cards on a
+     shallower diagonal, and a height that grows with the width so the front
+     card never hangs out of the card */
+  .home .stills { height: calc(44vw + var(--space-2xl)); }
+  .home .still--back  { width: 44%; left: 0;   top: 0;   --card-cx: 22cqw; --card-top: 0cqh; }
+  .home .still--top   { width: 44%; left: 28%; top: 22%; --card-cx: 50cqw; --card-top: 22cqh; }
+  .home .still--front { width: 44%; left: 56%; top: 44%; --card-cx: 78cqw; --card-top: 44cqh; }
   .slice, .tx { grid-template-columns: 1fr; }
   .panel, .tx__media { position: static; min-height: 0; }
   .errpage__options { grid-template-columns: 1fr; }
@@ -500,4 +507,82 @@ html.intro:not(.intro-run) .still { animation: none; opacity: 0; }
   @keyframes selbar-in { from { opacity: 0; transform: translateY(var(--rise-m)); } }
   .selbar .t-label-m { flex: 1; }
   .selbar__rule { display: none; }
+}
+
+/* ── Phone (≤600px) ──────────────────────────────────────────────────────
+   Not the desktop squeezed: a phone has no drag and drop, no hover and one
+   column, so each screen is recomposed for it.
+   Home: the stills lead as a small diagonal above the headline, the page is
+   the surface (no dropzone card), the whole pitch and its button sit in the
+   first screen. Slice: the panel loses its card and reads as the page; the
+   modes become a list; Extract docks to the bottom edge while the settings
+   scroll. Result: two-up tiles, actions that fit, selection without hover. */
+@media (max-width: 600px) {
+  .hide-s { display: none; }
+
+  /* Home */
+  .home {
+    gap: var(--space-l); padding: var(--space-xs) 0 var(--space-xl);
+    border: none; border-radius: 0; background: transparent;
+  }
+  .home__drop { display: none; }
+  .home .stills { order: -1; height: var(--stills-h-xs); }
+  .home .still--back  { width: 48%; left: 1%;  top: 0;    --card-cx: 25cqw; --card-top: 0cqh; }
+  .home .still--top   { width: 48%; left: 25%; top: 14%;  --card-cx: 49cqw; --card-top: 14cqh; }
+  .home .still--front { width: 48%; left: 49%; top: 28%;  --card-cx: 73cqw; --card-top: 28cqh; }
+  /* Under the next card the timecode would be cut mid-number: keep the index only */
+  .home .still--back figcaption > :last-child, .home .still--top figcaption > :last-child { visibility: hidden; }
+  .home__copy { gap: var(--space-m); }
+  .home__transcribe { flex-wrap: nowrap; justify-self: stretch; }
+  .home__transcribe > .t-label-m { flex: 1; min-width: 0; }
+
+  /* Slice */
+  .slice { gap: var(--space-xl); }
+  .panel { padding: 0; border: none; border-radius: 0; background: transparent; }
+  .presets { grid-template-columns: 1fr; }
+  .radio-card__box { align-items: center; padding: calc(var(--space-s) - var(--stroke-s)) calc(var(--space-m) - var(--stroke-s)); }
+  .radio-card input:checked + .radio-card__box { padding: calc(var(--space-s) - var(--stroke-m)) calc(var(--space-m) - var(--stroke-m)); }
+  .radio-card__dot { margin-top: 0; }
+  .radio-card__box > span:last-child { flex: 1; display: flex; justify-content: space-between; align-items: baseline; gap: var(--space-s); }
+  .radio-card__desc { margin-top: 0; text-align: right; }
+  .panel__action {
+    position: sticky; bottom: 0; z-index: 5;
+    margin: 0 calc(var(--space-m) * -1);
+    padding: var(--space-m) var(--space-m) calc(var(--space-m) + env(safe-area-inset-bottom));
+    background: linear-gradient(to bottom, var(--c-bg-0), var(--c-bg) var(--space-m));
+  }
+  .player__controls { gap: var(--space-xs); padding: var(--space-s); }
+  .player__dur { display: none; }
+
+  /* Result */
+  .result { padding-top: var(--space-s); }
+  .result__head { gap: var(--space-m); }
+  .result__actions { display: grid; grid-template-columns: 1fr 1fr; }
+  .result__tabs { flex-wrap: wrap; row-gap: 0; }
+  .result__include { padding: var(--space-xs) 0; }
+  .tiles { grid-template-columns: repeat(2, minmax(0, 1fr)); gap: var(--space-xs); }
+  .tile__meta { left: var(--space-xs); right: var(--space-xs); bottom: var(--space-2xs); }
+  /* How it works: the demo is the content, so the title steps down and the
+     chapters share one row */
+  .hiw-dialog { width: calc(100vw - 2 * var(--space-s)); max-height: calc(100dvh - 2 * var(--space-s)); }
+  .hiw-panel { gap: var(--space-m); padding: var(--space-l) var(--space-m); }
+  .hiw-head .t-title-m { font-size: var(--fs-title-s); line-height: var(--lh-title-s); letter-spacing: var(--ls-title-s); }
+  .hiw-steps { display: grid; grid-template-columns: 1fr 1fr; }
+  .hiw-step { width: 100%; padding-right: var(--space-s); }
+  .hiw-step .t-label-m { white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+
+  .selbar { bottom: calc(var(--space-m) + env(safe-area-inset-bottom)); gap: var(--space-2xs); }
+  .selbar .t-label-m { white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+  /* room under the last row so the bar never covers a tile */
+  .result:has(.selbar) .tiles { padding-bottom: var(--space-4xl); }
+  .tx { gap: var(--space-l); }
+}
+
+/* Touch: nothing waits on hover. A tile shows it can be picked; one-off
+   downloads go through the selection bar, so the per-tile icon steps aside. */
+@media (hover: none) {
+  .tile__check { opacity: 0.85; }
+  .tile__dl { display: none; }
+  .still:hover { box-shadow: var(--shadow-float); }
+  .radio-card__box:hover { border-color: var(--c-border); }
 }

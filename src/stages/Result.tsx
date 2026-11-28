@@ -84,7 +84,7 @@ export default function Result(p: Props) {
         <div className="result__actions">
           <button type="button" className="btn btn--ghost btn--l" onClick={p.onStartOver}><Reset size={16} /> Start over</button>
           <button type="button" className="btn btn--secondary btn--l" onClick={() => downloadSet(p.frames)} disabled={packing}>
-            {packing ? <Spinner /> : <Download size={16} />} {packing ? 'Packing…' : 'Download all frames'}
+            {packing ? <Spinner /> : <Download size={16} />} {packing ? 'Packing…' : <>Download all<span className="hide-s"> frames</span></>}
           </button>
         </div>
       </header>
@@ -284,7 +284,7 @@ function TranscriptTab(p: Props) {
                 </li>
               ))}
             </ol>
-            <p className="t-caption c-subtle">Click a line to jump to that moment.</p>
+            <p className="t-caption c-subtle">Pick a line to jump to that moment.</p>
           </>
         ) : <p className="t-transcript">{tx.result.text}</p>)}
       </section>

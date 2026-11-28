@@ -28,4 +28,6 @@
 }
 @media (max-width: 600px) {
   .t-display-xl { font-size: var(--fs-display-s); line-height: var(--lh-display-s); }
+  /* reading at arm's length: body size, so a line holds a phrase, not two words */
+  .t-transcript { font-size: var(--fs-body-m); line-height: var(--lh-body-l); }
 }

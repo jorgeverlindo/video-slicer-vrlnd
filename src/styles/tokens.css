@@ -241,6 +241,7 @@
   --ratio-w:        240px;
   --stills-h:       480px;
   --stills-h-s:     300px;
+  --stills-h-xs:    196px; /* phone: one shallow diagonal above the headline */
   --filmstrip-h:    60px;
   --filmstrip-ruler-h: 20px;
   --size-tick:      10px;
